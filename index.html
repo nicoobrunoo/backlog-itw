@@ -12,20 +12,23 @@
     :root {
       --bg: #f4f7fb;
       --card: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --border: #dbe3ef;
-      --blue: #0b4f8a;
-      --blue-2: #123b63;
-      --shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+      --text: #162033;
+      --muted: #667085;
+      --border: #d8e2ee;
+      --blue: #075a9b;
+      --blue-2: #10395f;
+      --blue-soft: #e8f2fb;
+      --shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+      --shadow-hover: 0 16px 36px rgba(15, 23, 42, 0.14);
       --red: #ef4444;
       --orange: #f97316;
       --yellow: #eab308;
       --gray: #94a3b8;
       --green: #22c55e;
       --danger: #dc2626;
-      --soft: #edf2f7;
+      --soft: #edf3f9;
       --input: #ffffff;
+      --radius: 18px;
     }
 
     body.dark {
@@ -36,7 +39,9 @@
       --border: #334155;
       --blue: #38bdf8;
       --blue-2: #0f172a;
-      --shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+      --blue-soft: #10243a;
+      --shadow: 0 12px 30px rgba(0, 0, 0, 0.36);
+      --shadow-hover: 0 18px 40px rgba(0, 0, 0, 0.52);
       --soft: #1e293b;
       --input: #0f172a;
     }
@@ -46,19 +51,21 @@
     body {
       margin: 0;
       font-family: "Segoe UI", Arial, sans-serif;
-      background: var(--bg);
+      background:
+        radial-gradient(circle at top left, rgba(11, 79, 138, .10), transparent 34%),
+        var(--bg);
       color: var(--text);
     }
 
     header {
-      background: linear-gradient(135deg, #0b4f8a, #123b63);
+      background: linear-gradient(135deg, #064b83, #123b63);
       color: white;
-      padding: 24px 32px;
+      padding: 26px 32px;
       box-shadow: var(--shadow);
     }
 
-    header h1 { margin: 0; font-size: 28px; }
-    header p { margin: 8px 0 0; opacity: 0.9; }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: -.3px; }
+    header p { margin: 8px 0 0; opacity: 0.92; }
 
     .dashboard {
       display: grid;
@@ -68,28 +75,32 @@
     }
 
     .stat-card {
-      background: var(--card);
+      background: rgba(255,255,255,.88);
+      backdrop-filter: blur(10px);
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: 18px;
       padding: 14px;
       box-shadow: var(--shadow);
     }
 
+    body.dark .stat-card { background: rgba(17,24,39,.88); }
+
     .stat-card strong {
       display: block;
-      font-size: 26px;
+      font-size: 27px;
       margin-bottom: 4px;
       color: var(--blue);
     }
 
-    .stat-card span { color: var(--muted); font-size: 13px; font-weight: 700; }
+    .stat-card span { color: var(--muted); font-size: 13px; font-weight: 800; }
 
     .toolbar {
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
       padding: 18px 32px;
-      background: var(--card);
+      background: color-mix(in srgb, var(--card) 92%, transparent);
+      backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
@@ -100,41 +111,43 @@
 
     .btn {
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 10px 16px;
       cursor: pointer;
-      font-weight: 800;
+      font-weight: 900;
       background: var(--blue);
       color: white;
-      transition: 0.2s;
+      transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+      box-shadow: 0 8px 18px rgba(7, 90, 155, .18);
     }
 
-    .btn:hover { transform: translateY(-1px); opacity: 0.92; }
-    .btn.secondary { background: #e5edf7; color: #0b4f8a; }
-    .btn.danger { background: #fee2e2; color: #991b1b; }
-    .btn.success { background: #dcfce7; color: #166534; }
+    .btn:hover { transform: translateY(-1px); opacity: 0.94; }
+    .btn.secondary { background: #e5edf7; color: #0b4f8a; box-shadow: none; }
+    .btn.success { background: #dcfce7; color: #166534; box-shadow: none; }
+    .btn.danger { background: #fee2e2; color: #991b1b; box-shadow: none; }
 
     .search, .sort-select {
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 10px 14px;
       outline: none;
       background: var(--input);
       color: var(--text);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.35);
     }
 
-    .search { flex: 1; min-width: 230px; }
+    .search { flex: 1; min-width: 260px; }
 
     .status-line {
       padding: 0 32px 12px;
       color: var(--muted);
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 800;
     }
 
     .board {
       display: grid;
-      grid-template-columns: repeat(5, minmax(290px, 1fr));
+      grid-template-columns: repeat(5, minmax(300px, 1fr));
       gap: 18px;
       padding: 12px 32px 24px;
       overflow-x: auto;
@@ -142,49 +155,76 @@
     }
 
     .column {
-      background: var(--soft);
-      border-radius: 16px;
+      background: color-mix(in srgb, var(--soft) 92%, transparent);
+      border-radius: var(--radius);
       border: 1px solid var(--border);
-      min-height: 520px;
+      min-height: 540px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, .05);
     }
 
     .column-header {
       padding: 14px;
       color: white;
-      font-weight: 900;
+      font-weight: 950;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 8px;
+      letter-spacing: -.2px;
     }
 
     .column-header span { font-size: 13px; opacity: 0.95; }
-    .red { background: var(--red); }
-    .orange { background: var(--orange); }
-    .yellow { background: var(--yellow); }
-    .gray { background: var(--gray); }
-    .green { background: var(--green); }
+    .red { background: linear-gradient(135deg, #ef4444, #be123c); }
+    .orange { background: linear-gradient(135deg, #f97316, #c2410c); }
+    .yellow { background: linear-gradient(135deg, #eab308, #a16207); }
+    .gray { background: linear-gradient(135deg, #94a3b8, #475569); }
+    .green { background: linear-gradient(135deg, #22c55e, #15803d); }
 
-    .task-list { padding: 12px; flex: 1; overflow-y: auto; }
+    .task-list {
+      padding: 12px;
+      flex: 1;
+      overflow-y: auto;
+      transition: background .18s ease;
+    }
+
+    .task-list.drag-over {
+      background: rgba(7, 90, 155, .08);
+    }
 
     .task {
       background: var(--card);
-      border-radius: 14px;
+      border-radius: 16px;
       padding: 14px;
       margin-bottom: 12px;
       box-shadow: var(--shadow);
+      border: 1px solid var(--border);
       border-left: 6px solid var(--blue);
       cursor: grab;
-      transition: 0.2s;
+      transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease, margin .18s ease;
+      position: relative;
     }
 
-    .task:hover { transform: translateY(-2px); }
-    .task.dragging { opacity: 0.5; transform: rotate(2deg); }
+    .task:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+    .task.dragging { opacity: 0.45; transform: rotate(1.5deg) scale(.985); }
 
-    .task h3 { margin: 0 0 8px; font-size: 16px; color: var(--blue); }
+    .task-placeholder {
+      height: 92px;
+      border: 2px dashed var(--blue);
+      border-radius: 16px;
+      background: rgba(7, 90, 155, .10);
+      margin-bottom: 12px;
+      animation: placeholderPulse .8s ease-in-out infinite alternate;
+    }
+
+    @keyframes placeholderPulse {
+      from { opacity: .55; transform: scale(.99); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .task h3 { margin: 0 0 8px; font-size: 16px; color: var(--blue); line-height: 1.25; }
     .task p {
       margin: 0 0 10px;
       font-size: 13px;
@@ -195,7 +235,7 @@
       overflow: hidden;
     }
 
-    .task-id { font-size: 11px; font-weight: 900; color: var(--muted); margin-bottom: 6px; }
+    .task-id { font-size: 11px; font-weight: 950; color: var(--muted); margin-bottom: 6px; letter-spacing: .2px; }
 
     .badges { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
     .badge {
@@ -205,7 +245,7 @@
       color: var(--muted);
       padding: 4px 7px;
       border-radius: 999px;
-      font-weight: 800;
+      font-weight: 850;
     }
 
     .task-images, .preview { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
@@ -213,11 +253,13 @@
     .task-images img {
       width: 58px;
       height: 58px;
-      border-radius: 8px;
+      border-radius: 10px;
       object-fit: cover;
       border: 1px solid var(--border);
       cursor: pointer;
+      transition: transform .15s ease;
     }
+    .task-images img:hover { transform: scale(1.04); }
 
     .meta {
       font-size: 12px;
@@ -232,15 +274,16 @@
 
     .small-btn {
       border: none;
-      border-radius: 8px;
-      padding: 7px 9px;
+      border-radius: 9px;
+      padding: 7px 10px;
       font-size: 12px;
       cursor: pointer;
       background: #eef2ff;
       color: #1e3a8a;
-      font-weight: 800;
+      font-weight: 900;
+      transition: transform .15s ease, opacity .15s ease;
     }
-
+    .small-btn:hover { transform: translateY(-1px); opacity: .9; }
     .small-btn.delete { background: #fee2e2; color: #991b1b; }
     .small-btn.view { background: #dcfce7; color: #166534; }
 
@@ -261,9 +304,9 @@
       width: 100%;
       max-width: 820px;
       background: var(--card);
-      border-radius: 18px;
+      border-radius: 20px;
       padding: 24px;
-      box-shadow: var(--shadow);
+      box-shadow: var(--shadow-hover);
       max-height: 90vh;
       overflow-y: auto;
       border: 1px solid var(--border);
@@ -277,7 +320,7 @@
 
     .form-group label {
       display: block;
-      font-weight: 800;
+      font-weight: 900;
       margin-bottom: 6px;
       color: var(--text);
     }
@@ -285,15 +328,30 @@
     .form-group input, .form-group textarea, .form-group select {
       width: 100%;
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px;
+      border-radius: 12px;
+      padding: 10px 12px;
       outline: none;
       font-size: 14px;
       background: var(--input);
       color: var(--text);
     }
 
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(7, 90, 155, .10);
+    }
+
     .form-group textarea { min-height: 120px; resize: vertical; }
+
+    .comment-compose {
+      display: grid;
+      grid-template-columns: 240px 1fr auto;
+      gap: 8px;
+      align-items: start;
+      margin-top: 10px;
+    }
+
+    .comment-compose textarea { min-height: 44px; }
 
     .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
 
@@ -301,7 +359,7 @@
       position: relative;
       width: 92px;
       height: 92px;
-      border-radius: 10px;
+      border-radius: 12px;
       overflow: hidden;
       border: 1px solid var(--border);
       background: var(--soft);
@@ -320,7 +378,7 @@
       background: var(--danger);
       color: white;
       cursor: pointer;
-      font-weight: 900;
+      font-weight: 950;
       line-height: 22px;
       padding: 0;
     }
@@ -339,32 +397,38 @@
 
     .comments-box, .history-box {
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 10px;
       background: rgba(148, 163, 184, .08);
       margin-top: 8px;
     }
 
     .comment, .history-item {
-      padding: 8px 0;
+      padding: 9px 0;
       border-bottom: 1px solid var(--border);
       font-size: 13px;
       color: var(--text);
+      display: grid;
+      gap: 4px;
     }
 
     .comment:last-child, .history-item:last-child { border-bottom: none; }
-    .comment small, .history-item small { display: block; color: var(--muted); margin-top: 3px; }
+    .comment small, .history-item small { display: block; color: var(--muted); margin-top: 2px; }
+    .comment-head { display:flex; justify-content:space-between; gap:8px; align-items:center; }
+    .comment-author { font-weight:950; color: var(--blue); }
+    .comment-delete { border:none; background:#fee2e2; color:#991b1b; border-radius:8px; padding:5px 8px; cursor:pointer; font-weight:900; }
 
     @media (max-width: 1200px) {
       .dashboard { grid-template-columns: repeat(3, 1fr); }
-      .board { grid-template-columns: repeat(5, 290px); }
+      .board { grid-template-columns: repeat(5, 300px); }
     }
 
-    @media (max-width: 700px) {
+    @media (max-width: 760px) {
       header, .toolbar, .board, .dashboard, .status-line { padding-left: 16px; padding-right: 16px; }
       header h1 { font-size: 22px; }
       .dashboard { grid-template-columns: repeat(2, 1fr); }
-      .form-grid { grid-template-columns: 1fr; }
+      .form-grid, .comment-compose { grid-template-columns: 1fr; }
+      .board { grid-template-columns: repeat(5, 285px); }
     }
   </style>
 </head>
@@ -382,15 +446,14 @@
     <button class="btn secondary" onclick="exportJSON()">Exportar JSON</button>
     <button class="btn secondary" onclick="importJSON()">Importar JSON</button>
     <button class="btn success" onclick="exportExcel()">Exportar Excel</button>
-    <button class="btn danger" onclick="resetBoard()">Restaurar iniciales</button>
     <button class="btn secondary" onclick="toggleDarkMode()">Modo oscuro</button>
     <input type="file" id="importFile" accept=".json" hidden />
-    <input class="search" id="searchInput" placeholder="Buscar por título, descripción, ID, responsable o solicitante..." oninput="renderTasks()" />
+    <input class="search" id="searchInput" placeholder="Buscar por título, descripción o ID..." oninput="renderTasks()" />
     <select class="sort-select" id="sortSelect" onchange="renderTasks()">
-      <option value="updated_desc">Ordenar: última modificación</option>
-      <option value="created_desc">Ordenar: fecha creación</option>
-      <option value="priority_desc">Ordenar: prioridad</option>
-      <option value="title_asc">Ordenar: título A-Z</option>
+      <option value="manual">Orden manual</option>
+      <option value="updated_desc">Última modificación</option>
+      <option value="created_desc">Fecha creación</option>
+      <option value="title_asc">Título A-Z</option>
     </select>
   </section>
 
@@ -413,17 +476,7 @@
           <textarea id="taskDescription" placeholder="Explicá claramente qué se necesita, cuál es el problema actual y qué comportamiento se espera."></textarea>
         </div>
 
-        <div class="form-group">
-          <label>Responsable</label>
-          <input id="taskResponsible" placeholder="Ej: Desarrollo / Soporte / Nicolás" />
-        </div>
-
-        <div class="form-group">
-          <label>Solicitante</label>
-          <input id="taskRequester" placeholder="Ej: Municipio / Área / Usuario" />
-        </div>
-
-        <div class="form-group">
+        <div class="form-group full">
           <label>Estado</label>
           <select id="taskStatus">
             <option value="urgente">Prioridad alta / urgente</option>
@@ -431,17 +484,6 @@
             <option value="pendiente">Pendiente</option>
             <option value="definicion">Pendiente de definición / análisis</option>
             <option value="implementado">Implementado</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Prioridad</label>
-          <select id="taskPriority">
-            <option value="5">Alta / Urgente</option>
-            <option value="4">Media Alta</option>
-            <option value="3">Media</option>
-            <option value="2">Baja</option>
-            <option value="1">Informativa</option>
           </select>
         </div>
 
@@ -454,8 +496,11 @@
         <div class="form-group full" id="commentsSection" style="display:none;">
           <label>Comentarios</label>
           <div class="comments-box" id="commentsBox"></div>
-          <textarea id="newComment" placeholder="Agregar comentario..."></textarea>
-          <button class="btn secondary" type="button" onclick="addCommentFromModal()">Agregar comentario</button>
+          <div class="comment-compose">
+            <input id="commentAuthor" placeholder="Nombre obligatorio" />
+            <textarea id="newComment" placeholder="Comentario obligatorio..."></textarea>
+            <button class="btn secondary" type="button" onclick="addCommentFromModal()">Agregar</button>
+          </div>
         </div>
 
         <div class="form-group full" id="historySection" style="display:none;">
@@ -482,8 +527,6 @@
   <script>
     /*******************************************************************
      * CONFIGURACIÓN SUPABASE
-     * Pegá acá tu anon public key de Supabase:
-     * Supabase > Project Settings > API > Project API keys > anon public
      *******************************************************************/
     const SUPABASE_URL = "https://mygijycrfrbiqjachhxy.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_90DLZu5l2xkJHRjYg8ytvQ_s0tIr7Hr";
@@ -501,35 +544,37 @@
     ];
 
     const initialTasks = [
-      { code: "ITW-001", title: "Implementación del módulo de Representados", description: "Implementar en Escobar 360 la funcionalidad de representados, actualmente disponible únicamente en SGT. El objetivo es permitir que los usuarios puedan operar en nombre de empresas o personas jurídicas asociadas a su perfil.", responsible: "SGT / Escobar 360", requester: "ITW", status: "urgente", priority: 5 },
-      { code: "ITW-002", title: "Autenticación automática para trámites externos", description: "Implementar autenticación automática para trámites externos como Certificado Fiscal o Boleta Digital, evitando que el usuario vuelva a ingresar manualmente su CUIT.", responsible: "CiDi / SGT / Soporte", requester: "ITW", status: "urgente", priority: 5 },
-      { code: "ITW-003", title: "Trámite de Abasto - Autorización de Ingreso de Mercadería", description: "Implementar la generación de una constancia correspondiente a la autorización de ingreso de mercadería dentro del trámite de Abasto.", responsible: "Desarrollo", requester: "Abasto", status: "desarrollo", priority: 4 },
-      { code: "ITW-004", title: "Rediseño del reporte del trámite", description: "Rediseñar el reporte generado por ITW para mejorar la claridad, organización y presentación de los datos.", responsible: "ITW / Desarrollo", requester: "ITW", status: "pendiente", priority: 3 },
-      { code: "ITW-005", title: "Visualización de títulos en el reporte", description: "Incorporar en el reporte final los títulos y subtítulos configurados dentro del trámite.", responsible: "ITW / Desarrollo", requester: "ITW", status: "pendiente", priority: 3 },
-      { code: "ITW-006", title: "Leyenda compresor de archivo", description: "Modificar el mensaje visible cuando un archivo supera el límite permitido, indicando que debe comprimirse antes de adjuntarlo.", responsible: "ITW / Desarrollo", requester: "ITW", status: "pendiente", priority: 3 },
-      { code: "ITW-007", title: "Pasaje de ITW a producción en App Ciudadana", description: "Adaptar ITW para que pueda visualizarse y funcionar correctamente dentro de App Ciudadana en ambiente productivo.", responsible: "App Ciudadana / ITW", requester: "Municipio", status: "pendiente", priority: 4 },
-      { code: "ITW-008", title: "Problema en Ver Trámite", description: "Corregir el comportamiento de navegación al visualizar un trámite en App Ciudadana.", responsible: "App Ciudadana / Desarrollo", requester: "Municipio", status: "pendiente", priority: 4 },
-      { code: "ITW-009", title: "Alineación de datos de respuesta", description: "Ajustar la visualización de datos devueltos por consultas dentro de un trámite para que se presenten correctamente alineados.", responsible: "App Ciudadana / Desarrollo", requester: "ITW", status: "pendiente", priority: 3 },
-      { code: "ITW-010", title: "Agrandar botón Subir Archivo (App)", description: "Ajustar el botón de Subir archivo dentro de App Ciudadana para mejorar su tamaño, ubicación y visibilidad.", responsible: "App Ciudadana / Desarrollo", requester: "ITW", status: "pendiente", priority: 3 },
-      { code: "ITW-011", title: "Optimización de la barra de búsqueda", description: "Modificar el comportamiento de búsqueda de trámites para que se ejecute a partir de la tercera letra ingresada.", responsible: "ITW / Desarrollo", requester: "ITW", status: "definicion", priority: 3 },
-      { code: "ITW-012", title: "Integración BOLDT - ITW - SGE", description: "Analizar e implementar la integración necesaria para permitir la recepción de archivos PDF correspondientes a trámites finalizados desde BOLDT hacia SGE.", responsible: "BOLDT / ITW / SGE", requester: "BOLDT", status: "definicion", priority: 4 },
-      { code: "ITW-013", title: "Licencias de Conducir - Turnero", description: "Analizar la incorporación de un módulo de gestión de turnos para Licencias de Conducir.", responsible: "Turnos / ITW", requester: "Licencias", status: "definicion", priority: 3 },
-      { code: "ITW-014", title: "Conversión automática JPG/PNG a PDF", description: "Evaluar e implementar conversión automática a PDF para archivos adjuntos en formato JPG o PNG.", responsible: "ITW / Desarrollo", requester: "ITW", status: "definicion", priority: 3 },
-      { code: "ITW-015", title: "Implementación de scroll continuo", description: "Analizar la posibilidad de reemplazar la división de formularios en múltiples páginas por scroll continuo.", responsible: "ITW / Desarrollo", requester: "ITW", status: "definicion", priority: 2 },
-      { code: "ITW-016", title: "Mejora en componente CHECK", description: "Mejorar la usabilidad del componente CHECK permitiendo seleccionar haciendo clic sobre el texto o área asociada.", responsible: "ITW / Desarrollo", requester: "ITW", status: "definicion", priority: 3 },
-      { code: "ITW-017", title: "Ajustar botón Subir Archivo (Web)", description: "Revisar y ajustar el botón Subir archivo en la versión web del formulario.", responsible: "ITW / Desarrollo", requester: "ITW", status: "definicion", priority: 3 },
-      { code: "ITW-018", title: "Nuevo componente de Título", description: "Crear un nuevo componente específico de título para dividir en secciones cada trámite.", responsible: "ITW / Desarrollo", requester: "ITW", status: "implementado", priority: 2 },
-      { code: "ITW-019", title: "Actualización tamaño máximo archivos a 20MB", description: "Actualizar el límite máximo permitido para adjuntar archivos, pasando de 15 MB a 20 MB.", responsible: "ITW / Infraestructura", requester: "ITW", status: "implementado", priority: 2 },
-      { code: "ITW-020", title: "Validación PDF obligatorio", description: "Incorporar validación para indicar que únicamente se permiten documentos en formato PDF cuando corresponda.", responsible: "ITW / Desarrollo", requester: "ITW", status: "implementado", priority: 2 },
-      { code: "ITW-021", title: "Nuevo campo fecha modificación", description: "Agregar un nuevo campo de fecha de modificación en la tabla TRAMITES.TRAMITE.", responsible: "Base de datos / Desarrollo", requester: "ITW", status: "implementado", priority: 2 },
-      { code: "ITW-022", title: "Corrección label componentes", description: "Eliminar leyendas incorrectas de límite de archivo en componentes que no corresponden.", responsible: "ITW / Desarrollo", requester: "ITW", status: "implementado", priority: 2 },
-      { code: "ITW-023", title: "Componente Aviso", description: "Conservar el componente anterior de Título para reutilizarlo como componente de aviso o advertencia.", responsible: "ITW / Desarrollo", requester: "ITW", status: "implementado", priority: 2 }
+      { code: "ITW-001", title: "Implementación del módulo de Representados", description: "Implementar en Escobar 360 la funcionalidad de representados, actualmente disponible únicamente en SGT. El objetivo es permitir que los usuarios puedan operar en nombre de empresas o personas jurídicas asociadas a su perfil.", status: "urgente" },
+      { code: "ITW-002", title: "Autenticación automática para trámites externos", description: "Implementar autenticación automática para trámites externos como Certificado Fiscal o Boleta Digital, evitando que el usuario vuelva a ingresar manualmente su CUIT.", status: "urgente" },
+      { code: "ITW-003", title: "Trámite de Abasto - Autorización de Ingreso de Mercadería", description: "Implementar la generación de una constancia correspondiente a la autorización de ingreso de mercadería dentro del trámite de Abasto.", status: "desarrollo" },
+      { code: "ITW-004", title: "Rediseño del reporte del trámite", description: "Rediseñar el reporte generado por ITW para mejorar la claridad, organización y presentación de los datos.", status: "pendiente" },
+      { code: "ITW-005", title: "Visualización de títulos en el reporte", description: "Incorporar en el reporte final los títulos y subtítulos configurados dentro del trámite.", status: "pendiente" },
+      { code: "ITW-006", title: "Leyenda compresor de archivo", description: "Modificar el mensaje visible cuando un archivo supera el límite permitido, indicando que debe comprimirse antes de adjuntarlo.", status: "pendiente" },
+      { code: "ITW-007", title: "Pasaje de ITW a producción en App Ciudadana", description: "Adaptar ITW para que pueda visualizarse y funcionar correctamente dentro de App Ciudadana en ambiente productivo.", status: "pendiente" },
+      { code: "ITW-008", title: "Problema en Ver Trámite", description: "Corregir el comportamiento de navegación al visualizar un trámite en App Ciudadana.", status: "pendiente" },
+      { code: "ITW-009", title: "Alineación de datos de respuesta", description: "Ajustar la visualización de datos devueltos por consultas dentro de un trámite para que se presenten correctamente alineados.", status: "pendiente" },
+      { code: "ITW-010", title: "Agrandar botón Subir Archivo (App)", description: "Ajustar el botón de Subir archivo dentro de App Ciudadana para mejorar su tamaño, ubicación y visibilidad.", status: "pendiente" },
+      { code: "ITW-011", title: "Optimización de la barra de búsqueda", description: "Modificar el comportamiento de búsqueda de trámites para que se ejecute a partir de la tercera letra ingresada.", status: "definicion" },
+      { code: "ITW-012", title: "Integración BOLDT - ITW - SGE", description: "Analizar e implementar la integración necesaria para permitir la recepción de archivos PDF correspondientes a trámites finalizados desde BOLDT hacia SGE.", status: "definicion" },
+      { code: "ITW-013", title: "Licencias de Conducir - Turnero", description: "Analizar la incorporación de un módulo de gestión de turnos para Licencias de Conducir.", status: "definicion" },
+      { code: "ITW-014", title: "Conversión automática JPG/PNG a PDF", description: "Evaluar e implementar conversión automática a PDF para archivos adjuntos en formato JPG o PNG.", status: "definicion" },
+      { code: "ITW-015", title: "Implementación de scroll continuo", description: "Analizar la posibilidad de reemplazar la división de formularios en múltiples páginas por scroll continuo.", status: "definicion" },
+      { code: "ITW-016", title: "Mejora en componente CHECK", description: "Mejorar la usabilidad del componente CHECK permitiendo seleccionar haciendo clic sobre el texto o área asociada.", status: "definicion" },
+      { code: "ITW-017", title: "Ajustar botón Subir Archivo (Web)", description: "Revisar y ajustar el botón Subir archivo en la versión web del formulario.", status: "definicion" },
+      { code: "ITW-018", title: "Nuevo componente de Título", description: "Crear un nuevo componente específico de título para dividir en secciones cada trámite.", status: "implementado" },
+      { code: "ITW-019", title: "Actualización tamaño máximo archivos a 20MB", description: "Actualizar el límite máximo permitido para adjuntar archivos, pasando de 15 MB a 20 MB.", status: "implementado" },
+      { code: "ITW-020", title: "Validación PDF obligatorio", description: "Incorporar validación para indicar que únicamente se permiten documentos en formato PDF cuando corresponda.", status: "implementado" },
+      { code: "ITW-021", title: "Nuevo campo fecha modificación", description: "Agregar un nuevo campo de fecha de modificación en la tabla TRAMITES.TRAMITE.", status: "implementado" },
+      { code: "ITW-022", title: "Corrección label componentes", description: "Eliminar leyendas incorrectas de límite de archivo en componentes que no corresponden.", status: "implementado" },
+      { code: "ITW-023", title: "Componente Aviso", description: "Conservar el componente anterior de Título para reutilizarlo como componente de aviso o advertencia.", status: "implementado" }
     ];
 
     let tasks = [];
     let selectedImages = [];
     let realtimeChannel = null;
     let isSaving = false;
+    let draggedTaskId = null;
+    let placeholder = null;
 
     document.addEventListener("DOMContentLoaded", initApp);
 
@@ -551,12 +596,14 @@
       const { data, error } = await supabaseClient
         .from(TASKS_TABLE)
         .select("*")
+        .order("status", { ascending: true })
+        .order("position", { ascending: true, nullsFirst: false })
         .order("updated_at", { ascending: false });
 
       if (error) {
         console.error(error);
         setStatus("Error al cargar tareas. Revisá la anon key, RLS y columnas de la tabla tasks.");
-        alert("No se pudieron cargar las tareas desde Supabase. Revisá consola, anon key y políticas RLS.");
+        alert("No se pudieron cargar las tareas desde Supabase. Si agregaste este código, verificá que existan las columnas comments, history, updated_at y position.");
         return;
       }
 
@@ -567,14 +614,12 @@
       if (tasks.length > 0) return;
 
       const now = new Date().toISOString();
-      const rows = initialTasks.map(task => ({
+      const rows = initialTasks.map((task, index) => ({
         code: task.code,
         title: task.title,
         description: task.description,
-        responsible: task.responsible,
-        requester: task.requester,
         status: task.status,
-        priority: task.priority,
+        position: index + 1,
         images: [],
         comments: [],
         history: [],
@@ -586,7 +631,7 @@
 
       if (error) {
         console.error(error);
-        alert("No se pudieron insertar las tareas iniciales. Revisá permisos INSERT en Supabase.");
+        alert("No se pudieron insertar las tareas iniciales. Revisá permisos INSERT y columnas de la tabla.");
         return;
       }
 
@@ -599,10 +644,8 @@
         code: task.code || "",
         title: task.title || "",
         description: task.description || "",
-        responsible: task.responsible || task.owner || "",
-        requester: task.requester || "",
         status: task.status || "pendiente",
-        priority: Number(task.priority || 3),
+        position: Number.isFinite(Number(task.position)) ? Number(task.position) : 999999,
         images: Array.isArray(task.images) ? task.images : [],
         comments: Array.isArray(task.comments) ? task.comments : [],
         history: Array.isArray(task.history) ? task.history : [],
@@ -639,9 +682,15 @@
             ${column.title}
             <span id="count-${column.id}">0</span>
           </div>
-          <div class="task-list" id="list-${column.id}" ondragover="allowDrop(event)" ondrop="dropTask(event, '${column.id}')"></div>
+          <div class="task-list" id="list-${column.id}" data-status="${column.id}"></div>
         `;
         board.appendChild(div);
+      });
+
+      document.querySelectorAll(".task-list").forEach(list => {
+        list.addEventListener("dragover", handleDragOver);
+        list.addEventListener("dragleave", handleDragLeave);
+        list.addEventListener("drop", handleDrop);
       });
     }
 
@@ -679,7 +728,7 @@
         const filtered = tasks
           .filter(task => task.status === column.id)
           .filter(task => {
-            const text = `${task.code} ${task.title} ${task.description} ${task.responsible} ${task.requester}`.toLowerCase();
+            const text = `${task.code} ${task.title} ${task.description}`.toLowerCase();
             return text.includes(search);
           })
           .sort((a, b) => sortTasks(a, b, sortValue));
@@ -697,17 +746,18 @@
 
     function sortTasks(a, b, sortValue) {
       if (sortValue === "created_desc") return new Date(b.created_at) - new Date(a.created_at);
-      if (sortValue === "priority_desc") return b.priority - a.priority;
+      if (sortValue === "updated_desc") return new Date(b.updated_at) - new Date(a.updated_at);
       if (sortValue === "title_asc") return a.title.localeCompare(b.title);
-      return new Date(b.updated_at) - new Date(a.updated_at);
+      return (a.position || 999999) - (b.position || 999999);
     }
 
     function createTaskCard(task) {
       const card = document.createElement("article");
       card.className = "task";
       card.draggable = true;
-      card.ondragstart = event => dragTask(event, task.id);
-      card.ondragend = event => event.currentTarget.classList.remove("dragging");
+      card.dataset.id = task.id;
+      card.addEventListener("dragstart", event => dragTask(event, task.id));
+      card.addEventListener("dragend", endDrag);
 
       const images = (task.images || []).slice(0, 4).map(img => `
         <img src="${escapeAttribute(img.url)}" onclick="openImageViewer('${escapeAttribute(img.url)}')" />
@@ -718,14 +768,11 @@
         <h3>${escapeHtml(task.title)}</h3>
         <p>${escapeHtml(task.description)}</p>
         <div class="badges">
-          <span class="badge">Prioridad ${task.priority}</span>
           <span class="badge">${(task.comments || []).length} comentarios</span>
           <span class="badge">${(task.images || []).length} adjuntos</span>
         </div>
         ${task.images && task.images.length ? `<div class="task-images">${images}</div>` : ""}
         <div class="meta">
-          <span><b>Responsable:</b> ${escapeHtml(task.responsible || "Sin asignar")}</span>
-          <span><b>Solicitante:</b> ${escapeHtml(task.requester || "Sin informar")}</span>
           <span><b>Creado:</b> ${formatDate(task.created_at)} · <b>Modificado:</b> ${formatDate(task.updated_at)}</span>
         </div>
         <div class="actions">
@@ -743,10 +790,7 @@
       document.getElementById("taskId").value = "";
       document.getElementById("taskTitle").value = "";
       document.getElementById("taskDescription").value = "";
-      document.getElementById("taskResponsible").value = "";
-      document.getElementById("taskRequester").value = "";
       document.getElementById("taskStatus").value = "definicion";
-      document.getElementById("taskPriority").value = "3";
       document.getElementById("taskImages").value = "";
       document.getElementById("commentsSection").style.display = "none";
       document.getElementById("historySection").style.display = "none";
@@ -804,11 +848,11 @@
 
         const ext = (img.file.name.split(".").pop() || "jpg").toLowerCase();
         const safeName = img.file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const path = `${taskId}/${Date.now()}-${crypto.randomUUID()}-${safeName}.${ext}`;
+        const path = `${taskId}/${Date.now()}-${crypto.randomUUID()}-${safeName}`;
 
         const { error } = await supabaseClient.storage
           .from(STORAGE_BUCKET)
-          .upload(path, img.file, { cacheControl: "3600", upsert: false });
+          .upload(path, img.file, { cacheControl: "3600", upsert: false, contentType: img.file.type || `image/${ext}` });
 
         if (error) {
           console.error(error);
@@ -827,10 +871,7 @@
       const id = document.getElementById("taskId").value;
       const title = document.getElementById("taskTitle").value.trim();
       const description = document.getElementById("taskDescription").value.trim();
-      const responsible = document.getElementById("taskResponsible").value.trim();
-      const requester = document.getElementById("taskRequester").value.trim();
       const status = document.getElementById("taskStatus").value;
-      const priority = Number(document.getElementById("taskPriority").value);
 
       if (!title || !description) {
         alert("Completá título y descripción.");
@@ -856,7 +897,7 @@
 
         const { error } = await supabaseClient
           .from(TASKS_TABLE)
-          .update({ title, description, responsible, requester, status, priority, images, history, updated_at: now })
+          .update({ title, description, status, images, history, updated_at: now })
           .eq("id", id);
 
         if (error) {
@@ -867,16 +908,15 @@
         const code = await generateNextCode();
         const tempId = crypto.randomUUID();
         const images = await uploadSelectedImages(tempId);
+        const nextPosition = getNextPosition(status);
 
         const { error } = await supabaseClient.from(TASKS_TABLE).insert({
           id: tempId,
           code,
           title,
           description,
-          responsible,
-          requester,
           status,
-          priority,
+          position: nextPosition,
           images,
           comments: [],
           history: [{ from: null, to: status, date: now, text: `Creación en ${getColumnTitle(status)}` }],
@@ -896,6 +936,12 @@
       isSaving = false;
     }
 
+    function getNextPosition(status) {
+      const sameColumn = tasks.filter(t => t.status === status);
+      if (!sameColumn.length) return 1;
+      return Math.max(...sameColumn.map(t => Number(t.position || 0))) + 1;
+    }
+
     async function generateNextCode() {
       const max = tasks.reduce((acc, task) => {
         const n = parseInt(String(task.code || "").replace("ITW-", ""), 10);
@@ -912,11 +958,10 @@
       document.getElementById("taskId").value = task.id;
       document.getElementById("taskTitle").value = task.title;
       document.getElementById("taskDescription").value = task.description;
-      document.getElementById("taskResponsible").value = task.responsible || "";
-      document.getElementById("taskRequester").value = task.requester || "";
       document.getElementById("taskStatus").value = task.status;
-      document.getElementById("taskPriority").value = String(task.priority || 3);
       document.getElementById("taskImages").value = "";
+      document.getElementById("commentAuthor").value = "";
+      document.getElementById("newComment").value = "";
 
       selectedImages = (task.images || []).map(img => ({ type: "saved", url: img.url, preview: img.url, path: img.path, name: img.name }));
       renderPreview();
@@ -950,39 +995,124 @@
     }
 
     function dragTask(event, id) {
+      draggedTaskId = id;
+      event.dataTransfer.effectAllowed = "move";
       event.dataTransfer.setData("taskId", id);
       event.currentTarget.classList.add("dragging");
+
+      placeholder = document.createElement("div");
+      placeholder.className = "task-placeholder";
     }
 
-    function allowDrop(event) { event.preventDefault(); }
-
-    async function dropTask(event, newStatus) {
+    function handleDragOver(event) {
       event.preventDefault();
-      const id = event.dataTransfer.getData("taskId");
+      const list = event.currentTarget;
+      list.classList.add("drag-over");
+      const afterElement = getDragAfterElement(list, event.clientY);
+      const empty = list.querySelector(".empty");
+      if (empty) empty.remove();
+
+      if (!placeholder) {
+        placeholder = document.createElement("div");
+        placeholder.className = "task-placeholder";
+      }
+
+      if (afterElement == null) {
+        list.appendChild(placeholder);
+      } else {
+        list.insertBefore(placeholder, afterElement);
+      }
+    }
+
+    function handleDragLeave(event) {
+      if (!event.currentTarget.contains(event.relatedTarget)) {
+        event.currentTarget.classList.remove("drag-over");
+      }
+    }
+
+    function getDragAfterElement(container, y) {
+      const draggableElements = [...container.querySelectorAll(".task:not(.dragging)")];
+
+      return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) return { offset, element: child };
+        return closest;
+      }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    async function handleDrop(event) {
+      event.preventDefault();
+      const list = event.currentTarget;
+      list.classList.remove("drag-over");
+      const id = event.dataTransfer.getData("taskId") || draggedTaskId;
       const task = tasks.find(t => t.id === id);
-      if (!task || task.status === newStatus) return;
+      if (!task) return endDrag();
 
+      const newStatus = list.dataset.status;
+      const orderedIds = [...list.children]
+        .filter(el => el.classList.contains("task") || el.classList.contains("task-placeholder"))
+        .map(el => el.classList.contains("task-placeholder") ? id : el.dataset.id)
+        .filter(Boolean)
+        .filter((value, index, array) => array.indexOf(value) === index);
+
+      await applyReorder(id, newStatus, orderedIds);
+      endDrag();
+    }
+
+    async function applyReorder(movedId, newStatus, orderedIdsInTarget) {
+      isSaving = true;
       const now = new Date().toISOString();
-      const history = [...(task.history || []), {
-        from: task.status,
-        to: newStatus,
-        date: now,
-        text: `Movimiento de ${getColumnTitle(task.status)} a ${getColumnTitle(newStatus)}`
-      }];
+      const movedTask = tasks.find(t => t.id === movedId);
+      const oldStatus = movedTask?.status;
 
-      const { error } = await supabaseClient
-        .from(TASKS_TABLE)
-        .update({ status: newStatus, history, updated_at: now })
-        .eq("id", id);
+      const updates = [];
 
-      if (error) {
-        console.error(error);
-        alert("No se pudo mover la tarea.");
-        return;
+      orderedIdsInTarget.forEach((id, index) => {
+        updates.push({ id, status: newStatus, position: index + 1, updated_at: now });
+      });
+
+      if (oldStatus && oldStatus !== newStatus) {
+        const oldColumnRemaining = tasks
+          .filter(t => t.status === oldStatus && t.id !== movedId)
+          .sort((a, b) => (a.position || 999999) - (b.position || 999999));
+
+        oldColumnRemaining.forEach((t, index) => {
+          updates.push({ id: t.id, status: oldStatus, position: index + 1, updated_at: now });
+        });
+      }
+
+      for (const item of updates) {
+        const payload = { status: item.status, position: item.position, updated_at: item.updated_at };
+
+        if (item.id === movedId && oldStatus !== newStatus) {
+          payload.history = [...(movedTask.history || []), {
+            from: oldStatus,
+            to: newStatus,
+            date: now,
+            text: `Movimiento de ${getColumnTitle(oldStatus)} a ${getColumnTitle(newStatus)}`
+          }];
+        }
+
+        const { error } = await supabaseClient.from(TASKS_TABLE).update(payload).eq("id", item.id);
+        if (error) {
+          console.error(error);
+          alert("No se pudo reubicar la tarea. Revisá que exista la columna position.");
+          break;
+        }
       }
 
       await loadTasks();
       renderTasks();
+      isSaving = false;
+    }
+
+    function endDrag() {
+      document.querySelectorAll(".task.dragging").forEach(el => el.classList.remove("dragging"));
+      document.querySelectorAll(".task-list.drag-over").forEach(el => el.classList.remove("drag-over"));
+      if (placeholder && placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
+      placeholder = null;
+      draggedTaskId = null;
     }
 
     function viewTask(id) {
@@ -990,7 +1120,13 @@
       if (!task) return;
 
       const images = (task.images || []).map(img => `<img src="${escapeAttribute(img.url)}" onclick="openImageViewer('${escapeAttribute(img.url)}')" />`).join("");
-      const comments = (task.comments || []).map(c => `<div class="comment">${escapeHtml(c.text)}<small>${formatDate(c.date)}</small></div>`).join("") || "<div class='empty'>Sin comentarios</div>";
+      const comments = (task.comments || []).map((c, i) => `
+        <div class="comment">
+          <div class="comment-head"><span class="comment-author">${escapeHtml(c.author || "Sin nombre")}</span></div>
+          <div>${escapeHtml(c.text)}</div>
+          <small>${formatDate(c.date)}</small>
+        </div>
+      `).join("") || "<div class='empty'>Sin comentarios</div>";
       const history = (task.history || []).map(h => `<div class="history-item">${escapeHtml(h.text)}<small>${formatDate(h.date)}</small></div>`).join("") || "<div class='empty'>Sin movimientos</div>";
 
       document.getElementById("viewContent").innerHTML = `
@@ -998,12 +1134,9 @@
         <p style="white-space:pre-wrap; line-height:1.55;">${escapeHtml(task.description)}</p>
         <div class="badges">
           <span class="badge">${getColumnTitle(task.status)}</span>
-          <span class="badge">Prioridad ${task.priority}</span>
           <span class="badge">Creado ${formatDate(task.created_at)}</span>
           <span class="badge">Modificado ${formatDate(task.updated_at)}</span>
         </div>
-        <p><b>Responsable:</b> ${escapeHtml(task.responsible || "Sin asignar")}</p>
-        <p><b>Solicitante:</b> ${escapeHtml(task.requester || "Sin informar")}</p>
         ${task.images?.length ? `<h3>Adjuntos</h3><div class="task-images">${images}</div>` : ""}
         <h3>Comentarios</h3><div class="comments-box">${comments}</div>
         <h3>Historial</h3><div class="history-box">${history}</div>
@@ -1021,13 +1154,25 @@
 
     async function addCommentFromModal() {
       const id = document.getElementById("taskId").value;
+      const author = document.getElementById("commentAuthor").value.trim();
       const text = document.getElementById("newComment").value.trim();
-      if (!id || !text) return;
+
+      if (!id) return;
+      if (!author) {
+        alert("Ingresá el nombre de quien comenta.");
+        document.getElementById("commentAuthor").focus();
+        return;
+      }
+      if (!text) {
+        alert("Ingresá el comentario.");
+        document.getElementById("newComment").focus();
+        return;
+      }
 
       const task = tasks.find(t => t.id === id);
       if (!task) return;
 
-      const comments = [...(task.comments || []), { text, date: new Date().toISOString() }];
+      const comments = [...(task.comments || []), { author, text, date: new Date().toISOString() }];
       const { error } = await supabaseClient
         .from(TASKS_TABLE)
         .update({ comments, updated_at: new Date().toISOString() })
@@ -1046,36 +1191,54 @@
       renderTasks();
     }
 
+    async function deleteComment(taskId, index) {
+      if (!confirm("¿Eliminar este comentario?")) return;
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      const comments = [...(task.comments || [])];
+      comments.splice(index, 1);
+
+      const { error } = await supabaseClient
+        .from(TASKS_TABLE)
+        .update({ comments, updated_at: new Date().toISOString() })
+        .eq("id", taskId);
+
+      if (error) {
+        console.error(error);
+        alert("No se pudo eliminar el comentario.");
+        return;
+      }
+
+      await loadTasks();
+      const updated = tasks.find(t => t.id === taskId);
+      renderComments(updated);
+      renderTasks();
+    }
+
     function renderComments(task) {
       const box = document.getElementById("commentsBox");
-      const comments = task.comments || [];
+      const comments = task?.comments || [];
       box.innerHTML = comments.length
-        ? comments.map(c => `<div class="comment">${escapeHtml(c.text)}<small>${formatDate(c.date)}</small></div>`).join("")
+        ? comments.map((c, index) => `
+          <div class="comment">
+            <div class="comment-head">
+              <span class="comment-author">${escapeHtml(c.author || "Sin nombre")}</span>
+              <button class="comment-delete" type="button" onclick="deleteComment('${task.id}', ${index})">Eliminar</button>
+            </div>
+            <div>${escapeHtml(c.text)}</div>
+            <small>${formatDate(c.date)}</small>
+          </div>
+        `).join("")
         : `<div class="empty">Sin comentarios</div>`;
     }
 
     function renderHistory(task) {
       const box = document.getElementById("historyBox");
-      const history = task.history || [];
+      const history = task?.history || [];
       box.innerHTML = history.length
         ? history.map(h => `<div class="history-item">${escapeHtml(h.text)}<small>${formatDate(h.date)}</small></div>`).join("")
         : `<div class="empty">Sin movimientos</div>`;
-    }
-
-    async function resetBoard() {
-      if (!confirm("Esto va a borrar todas las tareas actuales y restaurar las iniciales. ¿Continuar?")) return;
-
-      const { error: deleteError } = await supabaseClient.from(TASKS_TABLE).delete().neq("id", "00000000-0000-0000-0000-000000000000");
-      if (deleteError) {
-        console.error(deleteError);
-        alert("No se pudo limpiar la tabla.");
-        return;
-      }
-
-      tasks = [];
-      await seedInitialTasksIfEmpty();
-      await loadTasks();
-      renderTasks();
     }
 
     function exportJSON() {
@@ -1108,10 +1271,8 @@
             code: task.code || `ITW-${String(index + 1).padStart(3, "0")}`,
             title: task.title || "Sin título",
             description: task.description || "Sin descripción",
-            responsible: task.responsible || task.owner || "",
-            requester: task.requester || "",
             status: task.status || "pendiente",
-            priority: Number(task.priority || 3),
+            position: Number(task.position || index + 1),
             images: Array.isArray(task.images) ? task.images : [],
             comments: Array.isArray(task.comments) ? task.comments : [],
             history: Array.isArray(task.history) ? task.history : [],
@@ -1140,9 +1301,7 @@
         Título: task.title,
         Descripción: task.description,
         Estado: getColumnTitle(task.status),
-        Prioridad: task.priority,
-        Responsable: task.responsible,
-        Solicitante: task.requester,
+        Orden: task.position,
         Adjuntos: (task.images || []).length,
         Comentarios: (task.comments || []).length,
         Creado: formatDate(task.created_at),
