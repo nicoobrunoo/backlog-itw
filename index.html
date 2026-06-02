@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Backlog ITW - Tablero Kanban</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #dbe3ef;
+      --blue: #0b4f8a;
+      --blue-2: #123b63;
+      --shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+      --red: #ef4444;
+      --orange: #f97316;
+      --yellow: #eab308;
+      --gray: #94a3b8;
+      --green: #22c55e;
+      --danger: #dc2626;
+      --soft: #edf2f7;
+      --input: #ffffff;
+    }
+
+    body.dark {
+      --bg: #0f172a;
+      --card: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #334155;
+      --blue: #38bdf8;
+      --blue-2: #0f172a;
+      --shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+      --soft: #1e293b;
+      --input: #0f172a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      background: linear-gradient(135deg, #0b4f8a, #123b63);
+      color: white;
+      padding: 24px 32px;
+      box-shadow: var(--shadow);
+    }
+
+    header h1 { margin: 0; font-size: 28px; }
+    header p { margin: 8px 0 0; opacity: 0.9; }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(150px, 1fr));
+      gap: 12px;
+      padding: 18px 32px 0;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat-card strong {
+      display: block;
+      font-size: 26px;
+      margin-bottom: 4px;
+      color: var(--blue);
+    }
+
+    .stat-card span { color: var(--muted); font-size: 13px; font-weight: 700; }
+
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 18px 32px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    button, input, textarea, select { font-family: inherit; }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-weight: 800;
+      background: var(--blue);
+      color: white;
+      transition: 0.2s;
+    }
+
+    .btn:hover { transform: translateY(-1px); opacity: 0.92; }
+    .btn.secondary { background: #e5edf7; color: #0b4f8a; }
+    .btn.danger { background: #fee2e2; color: #991b1b; }
+    .btn.success { background: #dcfce7; color: #166534; }
+
+    .search, .sort-select {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      outline: none;
+      background: var(--input);
+      color: var(--text);
+    }
+
+    .search { flex: 1; min-width: 230px; }
+
+    .status-line {
+      padding: 0 32px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(290px, 1fr));
+      gap: 18px;
+      padding: 12px 32px 24px;
+      overflow-x: auto;
+      min-height: calc(100vh - 260px);
+    }
+
+    .column {
+      background: var(--soft);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      min-height: 520px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .column-header {
+      padding: 14px;
+      color: white;
+      font-weight: 900;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .column-header span { font-size: 13px; opacity: 0.95; }
+    .red { background: var(--red); }
+    .orange { background: var(--orange); }
+    .yellow { background: var(--yellow); }
+    .gray { background: var(--gray); }
+    .green { background: var(--green); }
+
+    .task-list { padding: 12px; flex: 1; overflow-y: auto; }
+
+    .task {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow);
+      border-left: 6px solid var(--blue);
+      cursor: grab;
+      transition: 0.2s;
+    }
+
+    .task:hover { transform: translateY(-2px); }
+    .task.dragging { opacity: 0.5; transform: rotate(2deg); }
+
+    .task h3 { margin: 0 0 8px; font-size: 16px; color: var(--blue); }
+    .task p {
+      margin: 0 0 10px;
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--text);
+      white-space: pre-wrap;
+      max-height: 92px;
+      overflow: hidden;
+    }
+
+    .task-id { font-size: 11px; font-weight: 900; color: var(--muted); margin-bottom: 6px; }
+
+    .badges { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+    .badge {
+      font-size: 11px;
+      border: 1px solid var(--border);
+      background: rgba(148, 163, 184, .14);
+      color: var(--muted);
+      padding: 4px 7px;
+      border-radius: 999px;
+      font-weight: 800;
+    }
+
+    .task-images, .preview { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+
+    .task-images img {
+      width: 58px;
+      height: 58px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      cursor: pointer;
+    }
+
+    .meta {
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+    .small-btn {
+      border: none;
+      border-radius: 8px;
+      padding: 7px 9px;
+      font-size: 12px;
+      cursor: pointer;
+      background: #eef2ff;
+      color: #1e3a8a;
+      font-weight: 800;
+    }
+
+    .small-btn.delete { background: #fee2e2; color: #991b1b; }
+    .small-btn.view { background: #dcfce7; color: #166534; }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.68);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal.active { display: flex; }
+
+    .modal-content {
+      width: 100%;
+      max-width: 820px;
+      background: var(--card);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      max-height: 90vh;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+    }
+
+    .modal-content h2 { margin-top: 0; color: var(--blue); }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { margin-bottom: 14px; }
+    .form-group.full { grid-column: 1 / -1; }
+
+    .form-group label {
+      display: block;
+      font-weight: 800;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      outline: none;
+      font-size: 14px;
+      background: var(--input);
+      color: var(--text);
+    }
+
+    .form-group textarea { min-height: 120px; resize: vertical; }
+
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+
+    .preview-item {
+      position: relative;
+      width: 92px;
+      height: 92px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--soft);
+    }
+
+    .preview-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .remove-img {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: none;
+      background: var(--danger);
+      color: white;
+      cursor: pointer;
+      font-weight: 900;
+      line-height: 22px;
+      padding: 0;
+    }
+
+    .image-viewer img { max-width: 90vw; max-height: 85vh; border-radius: 14px; box-shadow: var(--shadow); background: white; }
+
+    .empty {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      padding: 20px 10px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.25);
+    }
+
+    .comments-box, .history-box {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      background: rgba(148, 163, 184, .08);
+      margin-top: 8px;
+    }
+
+    .comment, .history-item {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .comment:last-child, .history-item:last-child { border-bottom: none; }
+    .comment small, .history-item small { display: block; color: var(--muted); margin-top: 3px; }
+
+    @media (max-width: 1200px) {
+      .dashboard { grid-template-columns: repeat(3, 1fr); }
+      .board { grid-template-columns: repeat(5, 290px); }
+    }
+
+    @media (max-width: 700px) {
+      header, .toolbar, .board, .dashboard, .status-line { padding-left: 16px; padding-right: 16px; }
+      header h1 { font-size: 22px; }
+      .dashboard { grid-template-columns: repeat(2, 1fr); }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Backlog ITW - Tablero Kanban</h1>
+    <p>Gestión de mejoras, ajustes, bugs y nuevas funcionalidades del Iniciador de Trámites Web.</p>
+  </header>
+
+  <section class="dashboard" id="dashboard"></section>
+
+  <section class="toolbar">
+    <button class="btn" onclick="openModal()">+ Nueva tarea</button>
+    <button class="btn secondary" onclick="exportJSON()">Exportar JSON</button>
+    <button class="btn secondary" onclick="importJSON()">Importar JSON</button>
+    <button class="btn success" onclick="exportExcel()">Exportar Excel</button>
+    <button class="btn danger" onclick="resetBoard()">Restaurar iniciales</button>
+    <button class="btn secondary" onclick="toggleDarkMode()">Modo oscuro</button>
+    <input type="file" id="importFile" accept=".json" hidden />
+    <input class="search" id="searchInput" placeholder="Buscar por título, descripción, ID, responsable o solicitante..." oninput="renderTasks()" />
+    <select class="sort-select" id="sortSelect" onchange="renderTasks()">
+      <option value="updated_desc">Ordenar: última modificación</option>
+      <option value="created_desc">Ordenar: fecha creación</option>
+      <option value="priority_desc">Ordenar: prioridad</option>
+      <option value="title_asc">Ordenar: título A-Z</option>
+    </select>
+  </section>
+
+  <div class="status-line" id="connectionStatus">Conectando con Supabase...</div>
+  <main class="board" id="board"></main>
+
+  <div class="modal" id="taskModal">
+    <div class="modal-content">
+      <h2 id="modalTitle">Nueva tarea</h2>
+      <input type="hidden" id="taskId" />
+
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Título</label>
+          <input id="taskTitle" placeholder="Ej: Ajustar botón de subir archivo" />
+        </div>
+
+        <div class="form-group full">
+          <label>Descripción</label>
+          <textarea id="taskDescription" placeholder="Explicá claramente qué se necesita, cuál es el problema actual y qué comportamiento se espera."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Responsable</label>
+          <input id="taskResponsible" placeholder="Ej: Desarrollo / Soporte / Nicolás" />
+        </div>
+
+        <div class="form-group">
+          <label>Solicitante</label>
+          <input id="taskRequester" placeholder="Ej: Municipio / Área / Usuario" />
+        </div>
+
+        <div class="form-group">
+          <label>Estado</label>
+          <select id="taskStatus">
+            <option value="urgente">Prioridad alta / urgente</option>
+            <option value="desarrollo">En desarrollo</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="definicion">Pendiente de definición / análisis</option>
+            <option value="implementado">Implementado</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Prioridad</label>
+          <select id="taskPriority">
+            <option value="5">Alta / Urgente</option>
+            <option value="4">Media Alta</option>
+            <option value="3">Media</option>
+            <option value="2">Baja</option>
+            <option value="1">Informativa</option>
+          </select>
+        </div>
+
+        <div class="form-group full">
+          <label>Adjuntar imágenes</label>
+          <input id="taskImages" type="file" accept="image/*" multiple />
+          <div class="preview" id="imagePreview"></div>
+        </div>
+
+        <div class="form-group full" id="commentsSection" style="display:none;">
+          <label>Comentarios</label>
+          <div class="comments-box" id="commentsBox"></div>
+          <textarea id="newComment" placeholder="Agregar comentario..."></textarea>
+          <button class="btn secondary" type="button" onclick="addCommentFromModal()">Agregar comentario</button>
+        </div>
+
+        <div class="form-group full" id="historySection" style="display:none;">
+          <label>Historial de movimientos</label>
+          <div class="history-box" id="historyBox"></div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn secondary" onclick="closeModal()">Cancelar</button>
+        <button class="btn" onclick="saveTask()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="viewModal">
+    <div class="modal-content" id="viewContent"></div>
+  </div>
+
+  <div class="modal image-viewer" id="imageViewer" onclick="closeImageViewer()">
+    <img id="viewerImage" />
+  </div>
+
+  <script>
+    /*******************************************************************
+     * CONFIGURACIÓN SUPABASE
+     * Pegá acá tu anon public key de Supabase:
+     * Supabase > Project Settings > API > Project API keys > anon public
+     *******************************************************************/
+    const SUPABASE_URL = "https://mygijycrfrbiqjachhxy.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_90DLZu5l2xkJHRjYg8ytvQ_s0tIr7Hr";
+    const TASKS_TABLE = "tasks";
+    const STORAGE_BUCKET = "task-images";
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const columns = [
+      { id: "urgente", title: "Prioridad Alta / Urgente", class: "red" },
+      { id: "desarrollo", title: "En Desarrollo", class: "orange" },
+      { id: "pendiente", title: "Pendientes", class: "yellow" },
+      { id: "definicion", title: "Pendientes de Definición / Análisis", class: "gray" },
+      { id: "implementado", title: "Implementado", class: "green" }
+    ];
+
+    const initialTasks = [
+      { code: "ITW-001", title: "Implementación del módulo de Representados", description: "Implementar en Escobar 360 la funcionalidad de representados, actualmente disponible únicamente en SGT. El objetivo es permitir que los usuarios puedan operar en nombre de empresas o personas jurídicas asociadas a su perfil.", responsible: "SGT / Escobar 360", requester: "ITW", status: "urgente", priority: 5 },
+      { code: "ITW-002", title: "Autenticación automática para trámites externos", description: "Implementar autenticación automática para trámites externos como Certificado Fiscal o Boleta Digital, evitando que el usuario vuelva a ingresar manualmente su CUIT.", responsible: "CiDi / SGT / Soporte", requester: "ITW", status: "urgente", priority: 5 },
+      { code: "ITW-003", title: "Trámite de Abasto - Autorización de Ingreso de Mercadería", description: "Implementar la generación de una constancia correspondiente a la autorización de ingreso de mercadería dentro del trámite de Abasto.", responsible: "Desarrollo", requester: "Abasto", status: "desarrollo", priority: 4 },
+      { code: "ITW-004", title: "Rediseño del reporte del trámite", description: "Rediseñar el reporte generado por ITW para mejorar la claridad, organización y presentación de los datos.", responsible: "ITW / Desarrollo", requester: "ITW", status: "pendiente", priority: 3 },
+      { code: "ITW-005", title: "Visualización de títulos en el reporte", description: "Incorporar en el reporte final los títulos y subtítulos configurados dentro del trámite.", responsible: "ITW / Desarrollo", requester: "ITW", status: "pendiente", priority: 3 },
+      { code: "ITW-006", title: "Leyenda compresor de archivo", description: "Modificar el mensaje visible cuando un archivo supera el límite permitido, indicando que debe comprimirse antes de adjuntarlo.", responsible: "ITW / Desarrollo", requester: "ITW", status: "pendiente", priority: 3 },
+      { code: "ITW-007", title: "Pasaje de ITW a producción en App Ciudadana", description: "Adaptar ITW para que pueda visualizarse y funcionar correctamente dentro de App Ciudadana en ambiente productivo.", responsible: "App Ciudadana / ITW", requester: "Municipio", status: "pendiente", priority: 4 },
+      { code: "ITW-008", title: "Problema en Ver Trámite", description: "Corregir el comportamiento de navegación al visualizar un trámite en App Ciudadana.", responsible: "App Ciudadana / Desarrollo", requester: "Municipio", status: "pendiente", priority: 4 },
+      { code: "ITW-009", title: "Alineación de datos de respuesta", description: "Ajustar la visualización de datos devueltos por consultas dentro de un trámite para que se presenten correctamente alineados.", responsible: "App Ciudadana / Desarrollo", requester: "ITW", status: "pendiente", priority: 3 },
+      { code: "ITW-010", title: "Agrandar botón Subir Archivo (App)", description: "Ajustar el botón de Subir archivo dentro de App Ciudadana para mejorar su tamaño, ubicación y visibilidad.", responsible: "App Ciudadana / Desarrollo", requester: "ITW", status: "pendiente", priority: 3 },
+      { code: "ITW-011", title: "Optimización de la barra de búsqueda", description: "Modificar el comportamiento de búsqueda de trámites para que se ejecute a partir de la tercera letra ingresada.", responsible: "ITW / Desarrollo", requester: "ITW", status: "definicion", priority: 3 },
+      { code: "ITW-012", title: "Integración BOLDT - ITW - SGE", description: "Analizar e implementar la integración necesaria para permitir la recepción de archivos PDF correspondientes a trámites finalizados desde BOLDT hacia SGE.", responsible: "BOLDT / ITW / SGE", requester: "BOLDT", status: "definicion", priority: 4 },
+      { code: "ITW-013", title: "Licencias de Conducir - Turnero", description: "Analizar la incorporación de un módulo de gestión de turnos para Licencias de Conducir.", responsible: "Turnos / ITW", requester: "Licencias", status: "definicion", priority: 3 },
+      { code: "ITW-014", title: "Conversión automática JPG/PNG a PDF", description: "Evaluar e implementar conversión automática a PDF para archivos adjuntos en formato JPG o PNG.", responsible: "ITW / Desarrollo", requester: "ITW", status: "definicion", priority: 3 },
+      { code: "ITW-015", title: "Implementación de scroll continuo", description: "Analizar la posibilidad de reemplazar la división de formularios en múltiples páginas por scroll continuo.", responsible: "ITW / Desarrollo", requester: "ITW", status: "definicion", priority: 2 },
+      { code: "ITW-016", title: "Mejora en componente CHECK", description: "Mejorar la usabilidad del componente CHECK permitiendo seleccionar haciendo clic sobre el texto o área asociada.", responsible: "ITW / Desarrollo", requester: "ITW", status: "definicion", priority: 3 },
+      { code: "ITW-017", title: "Ajustar botón Subir Archivo (Web)", description: "Revisar y ajustar el botón Subir archivo en la versión web del formulario.", responsible: "ITW / Desarrollo", requester: "ITW", status: "definicion", priority: 3 },
+      { code: "ITW-018", title: "Nuevo componente de Título", description: "Crear un nuevo componente específico de título para dividir en secciones cada trámite.", responsible: "ITW / Desarrollo", requester: "ITW", status: "implementado", priority: 2 },
+      { code: "ITW-019", title: "Actualización tamaño máximo archivos a 20MB", description: "Actualizar el límite máximo permitido para adjuntar archivos, pasando de 15 MB a 20 MB.", responsible: "ITW / Infraestructura", requester: "ITW", status: "implementado", priority: 2 },
+      { code: "ITW-020", title: "Validación PDF obligatorio", description: "Incorporar validación para indicar que únicamente se permiten documentos en formato PDF cuando corresponda.", responsible: "ITW / Desarrollo", requester: "ITW", status: "implementado", priority: 2 },
+      { code: "ITW-021", title: "Nuevo campo fecha modificación", description: "Agregar un nuevo campo de fecha de modificación en la tabla TRAMITES.TRAMITE.", responsible: "Base de datos / Desarrollo", requester: "ITW", status: "implementado", priority: 2 },
+      { code: "ITW-022", title: "Corrección label componentes", description: "Eliminar leyendas incorrectas de límite de archivo en componentes que no corresponden.", responsible: "ITW / Desarrollo", requester: "ITW", status: "implementado", priority: 2 },
+      { code: "ITW-023", title: "Componente Aviso", description: "Conservar el componente anterior de Título para reutilizarlo como componente de aviso o advertencia.", responsible: "ITW / Desarrollo", requester: "ITW", status: "implementado", priority: 2 }
+    ];
+
+    let tasks = [];
+    let selectedImages = [];
+    let realtimeChannel = null;
+    let isSaving = false;
+
+    document.addEventListener("DOMContentLoaded", initApp);
+
+    async function initApp() {
+      renderBoard();
+      bindImageInput();
+      await loadTasks();
+      await seedInitialTasksIfEmpty();
+      listenRealtime();
+      renderTasks();
+      setStatus("Conectado a Supabase. Los cambios se sincronizan en tiempo real.");
+    }
+
+    function setStatus(text) {
+      document.getElementById("connectionStatus").textContent = text;
+    }
+
+    async function loadTasks() {
+      const { data, error } = await supabaseClient
+        .from(TASKS_TABLE)
+        .select("*")
+        .order("updated_at", { ascending: false });
+
+      if (error) {
+        console.error(error);
+        setStatus("Error al cargar tareas. Revisá la anon key, RLS y columnas de la tabla tasks.");
+        alert("No se pudieron cargar las tareas desde Supabase. Revisá consola, anon key y políticas RLS.");
+        return;
+      }
+
+      tasks = (data || []).map(normalizeTask);
+    }
+
+    async function seedInitialTasksIfEmpty() {
+      if (tasks.length > 0) return;
+
+      const now = new Date().toISOString();
+      const rows = initialTasks.map(task => ({
+        code: task.code,
+        title: task.title,
+        description: task.description,
+        responsible: task.responsible,
+        requester: task.requester,
+        status: task.status,
+        priority: task.priority,
+        images: [],
+        comments: [],
+        history: [],
+        created_at: now,
+        updated_at: now
+      }));
+
+      const { error } = await supabaseClient.from(TASKS_TABLE).insert(rows);
+
+      if (error) {
+        console.error(error);
+        alert("No se pudieron insertar las tareas iniciales. Revisá permisos INSERT en Supabase.");
+        return;
+      }
+
+      await loadTasks();
+    }
+
+    function normalizeTask(task) {
+      return {
+        id: task.id,
+        code: task.code || "",
+        title: task.title || "",
+        description: task.description || "",
+        responsible: task.responsible || task.owner || "",
+        requester: task.requester || "",
+        status: task.status || "pendiente",
+        priority: Number(task.priority || 3),
+        images: Array.isArray(task.images) ? task.images : [],
+        comments: Array.isArray(task.comments) ? task.comments : [],
+        history: Array.isArray(task.history) ? task.history : [],
+        created_at: task.created_at || new Date().toISOString(),
+        updated_at: task.updated_at || task.created_at || new Date().toISOString()
+      };
+    }
+
+    function listenRealtime() {
+      if (realtimeChannel) supabaseClient.removeChannel(realtimeChannel);
+
+      realtimeChannel = supabaseClient
+        .channel("tasks-realtime")
+        .on("postgres_changes", { event: "*", schema: "public", table: TASKS_TABLE }, async () => {
+          if (isSaving) return;
+          await loadTasks();
+          renderTasks();
+        })
+        .subscribe(status => {
+          if (status === "SUBSCRIBED") setStatus("Realtime activo. Todos los usuarios ven el mismo tablero.");
+        });
+    }
+
+    function renderBoard() {
+      const board = document.getElementById("board");
+      board.innerHTML = "";
+
+      columns.forEach(column => {
+        const div = document.createElement("section");
+        div.className = "column";
+        div.dataset.status = column.id;
+        div.innerHTML = `
+          <div class="column-header ${column.class}">
+            ${column.title}
+            <span id="count-${column.id}">0</span>
+          </div>
+          <div class="task-list" id="list-${column.id}" ondragover="allowDrop(event)" ondrop="dropTask(event, '${column.id}')"></div>
+        `;
+        board.appendChild(div);
+      });
+    }
+
+    function renderDashboard() {
+      const stats = [
+        { label: "Total tareas", value: tasks.length },
+        { label: "Urgentes", value: countByStatus("urgente") },
+        { label: "En Desarrollo", value: countByStatus("desarrollo") },
+        { label: "Pendientes", value: countByStatus("pendiente") },
+        { label: "En Análisis", value: countByStatus("definicion") },
+        { label: "Implementadas", value: countByStatus("implementado") }
+      ];
+
+      document.getElementById("dashboard").innerHTML = stats.map(stat => `
+        <div class="stat-card">
+          <strong>${stat.value}</strong>
+          <span>${stat.label}</span>
+        </div>
+      `).join("");
+    }
+
+    function countByStatus(status) {
+      return tasks.filter(task => task.status === status).length;
+    }
+
+    function renderTasks() {
+      renderDashboard();
+      const search = document.getElementById("searchInput").value.toLowerCase().trim();
+      const sortValue = document.getElementById("sortSelect").value;
+
+      columns.forEach(column => {
+        const list = document.getElementById(`list-${column.id}`);
+        list.innerHTML = "";
+
+        const filtered = tasks
+          .filter(task => task.status === column.id)
+          .filter(task => {
+            const text = `${task.code} ${task.title} ${task.description} ${task.responsible} ${task.requester}`.toLowerCase();
+            return text.includes(search);
+          })
+          .sort((a, b) => sortTasks(a, b, sortValue));
+
+        document.getElementById(`count-${column.id}`).textContent = filtered.length;
+
+        if (filtered.length === 0) {
+          list.innerHTML = `<div class="empty">Sin tareas</div>`;
+          return;
+        }
+
+        filtered.forEach(task => list.appendChild(createTaskCard(task)));
+      });
+    }
+
+    function sortTasks(a, b, sortValue) {
+      if (sortValue === "created_desc") return new Date(b.created_at) - new Date(a.created_at);
+      if (sortValue === "priority_desc") return b.priority - a.priority;
+      if (sortValue === "title_asc") return a.title.localeCompare(b.title);
+      return new Date(b.updated_at) - new Date(a.updated_at);
+    }
+
+    function createTaskCard(task) {
+      const card = document.createElement("article");
+      card.className = "task";
+      card.draggable = true;
+      card.ondragstart = event => dragTask(event, task.id);
+      card.ondragend = event => event.currentTarget.classList.remove("dragging");
+
+      const images = (task.images || []).slice(0, 4).map(img => `
+        <img src="${escapeAttribute(img.url)}" onclick="openImageViewer('${escapeAttribute(img.url)}')" />
+      `).join("");
+
+      card.innerHTML = `
+        <div class="task-id">${escapeHtml(task.code || "")}</div>
+        <h3>${escapeHtml(task.title)}</h3>
+        <p>${escapeHtml(task.description)}</p>
+        <div class="badges">
+          <span class="badge">Prioridad ${task.priority}</span>
+          <span class="badge">${(task.comments || []).length} comentarios</span>
+          <span class="badge">${(task.images || []).length} adjuntos</span>
+        </div>
+        ${task.images && task.images.length ? `<div class="task-images">${images}</div>` : ""}
+        <div class="meta">
+          <span><b>Responsable:</b> ${escapeHtml(task.responsible || "Sin asignar")}</span>
+          <span><b>Solicitante:</b> ${escapeHtml(task.requester || "Sin informar")}</span>
+          <span><b>Creado:</b> ${formatDate(task.created_at)} · <b>Modificado:</b> ${formatDate(task.updated_at)}</span>
+        </div>
+        <div class="actions">
+          <button class="small-btn view" onclick="viewTask('${task.id}')">Ver</button>
+          <button class="small-btn" onclick="editTask('${task.id}')">Editar</button>
+          <button class="small-btn delete" onclick="deleteTask('${task.id}')">Eliminar</button>
+        </div>
+      `;
+
+      return card;
+    }
+
+    function openModal() {
+      document.getElementById("modalTitle").textContent = "Nueva tarea";
+      document.getElementById("taskId").value = "";
+      document.getElementById("taskTitle").value = "";
+      document.getElementById("taskDescription").value = "";
+      document.getElementById("taskResponsible").value = "";
+      document.getElementById("taskRequester").value = "";
+      document.getElementById("taskStatus").value = "definicion";
+      document.getElementById("taskPriority").value = "3";
+      document.getElementById("taskImages").value = "";
+      document.getElementById("commentsSection").style.display = "none";
+      document.getElementById("historySection").style.display = "none";
+      selectedImages = [];
+      renderPreview();
+      document.getElementById("taskModal").classList.add("active");
+    }
+
+    function closeModal() {
+      document.getElementById("taskModal").classList.remove("active");
+    }
+
+    function bindImageInput() {
+      document.getElementById("taskImages").addEventListener("change", function(event) {
+        const files = Array.from(event.target.files || []);
+        files.forEach(file => {
+          if (!file.type.startsWith("image/")) return;
+          selectedImages.push({ type: "new", file, preview: URL.createObjectURL(file), name: file.name });
+        });
+        event.target.value = "";
+        renderPreview();
+      });
+
+      document.getElementById("importFile").addEventListener("change", handleImportFile);
+    }
+
+    function renderPreview() {
+      const preview = document.getElementById("imagePreview");
+      preview.innerHTML = "";
+
+      selectedImages.forEach((img, index) => {
+        const item = document.createElement("div");
+        item.className = "preview-item";
+        item.innerHTML = `
+          <img src="${escapeAttribute(img.preview || img.url)}" />
+          <button class="remove-img" type="button" onclick="removeSelectedImage(${index})">×</button>
+        `;
+        preview.appendChild(item);
+      });
+    }
+
+    function removeSelectedImage(index) {
+      selectedImages.splice(index, 1);
+      renderPreview();
+    }
+
+    async function uploadSelectedImages(taskId) {
+      const uploaded = [];
+
+      for (const img of selectedImages) {
+        if (img.type === "saved") {
+          uploaded.push({ url: img.url, path: img.path || null, name: img.name || "imagen" });
+          continue;
+        }
+
+        const ext = (img.file.name.split(".").pop() || "jpg").toLowerCase();
+        const safeName = img.file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = `${taskId}/${Date.now()}-${crypto.randomUUID()}-${safeName}.${ext}`;
+
+        const { error } = await supabaseClient.storage
+          .from(STORAGE_BUCKET)
+          .upload(path, img.file, { cacheControl: "3600", upsert: false });
+
+        if (error) {
+          console.error(error);
+          alert("No se pudo subir una imagen. Revisá políticas del bucket task-images.");
+          continue;
+        }
+
+        const { data } = supabaseClient.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+        uploaded.push({ url: data.publicUrl, path, name: img.file.name });
+      }
+
+      return uploaded;
+    }
+
+    async function saveTask() {
+      const id = document.getElementById("taskId").value;
+      const title = document.getElementById("taskTitle").value.trim();
+      const description = document.getElementById("taskDescription").value.trim();
+      const responsible = document.getElementById("taskResponsible").value.trim();
+      const requester = document.getElementById("taskRequester").value.trim();
+      const status = document.getElementById("taskStatus").value;
+      const priority = Number(document.getElementById("taskPriority").value);
+
+      if (!title || !description) {
+        alert("Completá título y descripción.");
+        return;
+      }
+
+      isSaving = true;
+      const now = new Date().toISOString();
+
+      if (id) {
+        const oldTask = tasks.find(t => t.id === id);
+        const images = await uploadSelectedImages(id);
+        const history = [...(oldTask?.history || [])];
+
+        if (oldTask && oldTask.status !== status) {
+          history.push({
+            from: oldTask.status,
+            to: status,
+            date: now,
+            text: `Movimiento de ${getColumnTitle(oldTask.status)} a ${getColumnTitle(status)}`
+          });
+        }
+
+        const { error } = await supabaseClient
+          .from(TASKS_TABLE)
+          .update({ title, description, responsible, requester, status, priority, images, history, updated_at: now })
+          .eq("id", id);
+
+        if (error) {
+          console.error(error);
+          alert("No se pudo actualizar la tarea.");
+        }
+      } else {
+        const code = await generateNextCode();
+        const tempId = crypto.randomUUID();
+        const images = await uploadSelectedImages(tempId);
+
+        const { error } = await supabaseClient.from(TASKS_TABLE).insert({
+          id: tempId,
+          code,
+          title,
+          description,
+          responsible,
+          requester,
+          status,
+          priority,
+          images,
+          comments: [],
+          history: [{ from: null, to: status, date: now, text: `Creación en ${getColumnTitle(status)}` }],
+          created_at: now,
+          updated_at: now
+        });
+
+        if (error) {
+          console.error(error);
+          alert("No se pudo crear la tarea.");
+        }
+      }
+
+      closeModal();
+      await loadTasks();
+      renderTasks();
+      isSaving = false;
+    }
+
+    async function generateNextCode() {
+      const max = tasks.reduce((acc, task) => {
+        const n = parseInt(String(task.code || "").replace("ITW-", ""), 10);
+        return Number.isFinite(n) ? Math.max(acc, n) : acc;
+      }, 0);
+      return "ITW-" + String(max + 1).padStart(3, "0");
+    }
+
+    function editTask(id) {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+
+      document.getElementById("modalTitle").textContent = "Editar tarea";
+      document.getElementById("taskId").value = task.id;
+      document.getElementById("taskTitle").value = task.title;
+      document.getElementById("taskDescription").value = task.description;
+      document.getElementById("taskResponsible").value = task.responsible || "";
+      document.getElementById("taskRequester").value = task.requester || "";
+      document.getElementById("taskStatus").value = task.status;
+      document.getElementById("taskPriority").value = String(task.priority || 3);
+      document.getElementById("taskImages").value = "";
+
+      selectedImages = (task.images || []).map(img => ({ type: "saved", url: img.url, preview: img.url, path: img.path, name: img.name }));
+      renderPreview();
+      renderComments(task);
+      renderHistory(task);
+
+      document.getElementById("commentsSection").style.display = "block";
+      document.getElementById("historySection").style.display = "block";
+      document.getElementById("taskModal").classList.add("active");
+    }
+
+    async function deleteTask(id) {
+      if (!confirm("¿Seguro que querés eliminar esta tarea?")) return;
+
+      const task = tasks.find(t => t.id === id);
+      if (task && Array.isArray(task.images)) {
+        const paths = task.images.map(img => img.path).filter(Boolean);
+        if (paths.length) await supabaseClient.storage.from(STORAGE_BUCKET).remove(paths);
+      }
+
+      const { error } = await supabaseClient.from(TASKS_TABLE).delete().eq("id", id);
+
+      if (error) {
+        console.error(error);
+        alert("No se pudo eliminar la tarea.");
+        return;
+      }
+
+      await loadTasks();
+      renderTasks();
+    }
+
+    function dragTask(event, id) {
+      event.dataTransfer.setData("taskId", id);
+      event.currentTarget.classList.add("dragging");
+    }
+
+    function allowDrop(event) { event.preventDefault(); }
+
+    async function dropTask(event, newStatus) {
+      event.preventDefault();
+      const id = event.dataTransfer.getData("taskId");
+      const task = tasks.find(t => t.id === id);
+      if (!task || task.status === newStatus) return;
+
+      const now = new Date().toISOString();
+      const history = [...(task.history || []), {
+        from: task.status,
+        to: newStatus,
+        date: now,
+        text: `Movimiento de ${getColumnTitle(task.status)} a ${getColumnTitle(newStatus)}`
+      }];
+
+      const { error } = await supabaseClient
+        .from(TASKS_TABLE)
+        .update({ status: newStatus, history, updated_at: now })
+        .eq("id", id);
+
+      if (error) {
+        console.error(error);
+        alert("No se pudo mover la tarea.");
+        return;
+      }
+
+      await loadTasks();
+      renderTasks();
+    }
+
+    function viewTask(id) {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+
+      const images = (task.images || []).map(img => `<img src="${escapeAttribute(img.url)}" onclick="openImageViewer('${escapeAttribute(img.url)}')" />`).join("");
+      const comments = (task.comments || []).map(c => `<div class="comment">${escapeHtml(c.text)}<small>${formatDate(c.date)}</small></div>`).join("") || "<div class='empty'>Sin comentarios</div>";
+      const history = (task.history || []).map(h => `<div class="history-item">${escapeHtml(h.text)}<small>${formatDate(h.date)}</small></div>`).join("") || "<div class='empty'>Sin movimientos</div>";
+
+      document.getElementById("viewContent").innerHTML = `
+        <h2>${escapeHtml(task.code)} - ${escapeHtml(task.title)}</h2>
+        <p style="white-space:pre-wrap; line-height:1.55;">${escapeHtml(task.description)}</p>
+        <div class="badges">
+          <span class="badge">${getColumnTitle(task.status)}</span>
+          <span class="badge">Prioridad ${task.priority}</span>
+          <span class="badge">Creado ${formatDate(task.created_at)}</span>
+          <span class="badge">Modificado ${formatDate(task.updated_at)}</span>
+        </div>
+        <p><b>Responsable:</b> ${escapeHtml(task.responsible || "Sin asignar")}</p>
+        <p><b>Solicitante:</b> ${escapeHtml(task.requester || "Sin informar")}</p>
+        ${task.images?.length ? `<h3>Adjuntos</h3><div class="task-images">${images}</div>` : ""}
+        <h3>Comentarios</h3><div class="comments-box">${comments}</div>
+        <h3>Historial</h3><div class="history-box">${history}</div>
+        <div class="modal-actions">
+          <button class="btn secondary" onclick="closeViewModal()">Cerrar</button>
+          <button class="btn" onclick="closeViewModal(); editTask('${task.id}')">Editar</button>
+        </div>
+      `;
+      document.getElementById("viewModal").classList.add("active");
+    }
+
+    function closeViewModal() {
+      document.getElementById("viewModal").classList.remove("active");
+    }
+
+    async function addCommentFromModal() {
+      const id = document.getElementById("taskId").value;
+      const text = document.getElementById("newComment").value.trim();
+      if (!id || !text) return;
+
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+
+      const comments = [...(task.comments || []), { text, date: new Date().toISOString() }];
+      const { error } = await supabaseClient
+        .from(TASKS_TABLE)
+        .update({ comments, updated_at: new Date().toISOString() })
+        .eq("id", id);
+
+      if (error) {
+        console.error(error);
+        alert("No se pudo agregar el comentario.");
+        return;
+      }
+
+      document.getElementById("newComment").value = "";
+      await loadTasks();
+      const updated = tasks.find(t => t.id === id);
+      renderComments(updated);
+      renderTasks();
+    }
+
+    function renderComments(task) {
+      const box = document.getElementById("commentsBox");
+      const comments = task.comments || [];
+      box.innerHTML = comments.length
+        ? comments.map(c => `<div class="comment">${escapeHtml(c.text)}<small>${formatDate(c.date)}</small></div>`).join("")
+        : `<div class="empty">Sin comentarios</div>`;
+    }
+
+    function renderHistory(task) {
+      const box = document.getElementById("historyBox");
+      const history = task.history || [];
+      box.innerHTML = history.length
+        ? history.map(h => `<div class="history-item">${escapeHtml(h.text)}<small>${formatDate(h.date)}</small></div>`).join("")
+        : `<div class="empty">Sin movimientos</div>`;
+    }
+
+    async function resetBoard() {
+      if (!confirm("Esto va a borrar todas las tareas actuales y restaurar las iniciales. ¿Continuar?")) return;
+
+      const { error: deleteError } = await supabaseClient.from(TASKS_TABLE).delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      if (deleteError) {
+        console.error(deleteError);
+        alert("No se pudo limpiar la tabla.");
+        return;
+      }
+
+      tasks = [];
+      await seedInitialTasksIfEmpty();
+      await loadTasks();
+      renderTasks();
+    }
+
+    function exportJSON() {
+      const data = JSON.stringify(tasks, null, 2);
+      const blob = new Blob([data], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "backup_backlog_itw_supabase.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importJSON() {
+      document.getElementById("importFile").click();
+    }
+
+    async function handleImportFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!Array.isArray(imported)) throw new Error("El JSON debe ser un array de tareas.");
+
+          const now = new Date().toISOString();
+          const rows = imported.map((task, index) => ({
+            code: task.code || `ITW-${String(index + 1).padStart(3, "0")}`,
+            title: task.title || "Sin título",
+            description: task.description || "Sin descripción",
+            responsible: task.responsible || task.owner || "",
+            requester: task.requester || "",
+            status: task.status || "pendiente",
+            priority: Number(task.priority || 3),
+            images: Array.isArray(task.images) ? task.images : [],
+            comments: Array.isArray(task.comments) ? task.comments : [],
+            history: Array.isArray(task.history) ? task.history : [],
+            created_at: task.created_at || now,
+            updated_at: task.updated_at || now
+          }));
+
+          const { error } = await supabaseClient.from(TASKS_TABLE).insert(rows);
+          if (error) throw error;
+
+          await loadTasks();
+          renderTasks();
+          alert("Backup importado correctamente.");
+        } catch (err) {
+          console.error(err);
+          alert("El archivo no tiene un formato válido o no se pudo importar.");
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = "";
+    }
+
+    function exportExcel() {
+      const rows = tasks.map(task => ({
+        ID: task.code,
+        Título: task.title,
+        Descripción: task.description,
+        Estado: getColumnTitle(task.status),
+        Prioridad: task.priority,
+        Responsable: task.responsible,
+        Solicitante: task.requester,
+        Adjuntos: (task.images || []).length,
+        Comentarios: (task.comments || []).length,
+        Creado: formatDate(task.created_at),
+        Modificado: formatDate(task.updated_at)
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Backlog ITW");
+      XLSX.writeFile(wb, "backlog_itw.xlsx");
+    }
+
+    function openImageViewer(src) {
+      document.getElementById("viewerImage").src = src;
+      document.getElementById("imageViewer").classList.add("active");
+    }
+
+    function closeImageViewer() {
+      document.getElementById("imageViewer").classList.remove("active");
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark");
+    }
+
+    function getColumnTitle(status) {
+      return columns.find(c => c.id === status)?.title || status;
+    }
+
+    function formatDate(value) {
+      if (!value) return "-";
+      return new Date(value).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" });
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text || "";
+      return div.innerHTML;
+    }
+
+    function escapeAttribute(text) {
+      return String(text || "").replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+    }
+  </script>
+</body>
+</html>
