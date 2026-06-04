@@ -7,6 +7,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
 
   <style>
     :root {
@@ -25,7 +27,6 @@
       --yellow: #eab308;
       --gray: #94a3b8;
       --green: #22c55e;
-      --purple: #8b5cf6;
       --danger: #dc2626;
       --soft: #edf3f9;
       --input: #ffffff;
@@ -70,7 +71,7 @@
 
     .dashboard {
       display: grid;
-      grid-template-columns: repeat(7, minmax(145px, 1fr));
+      grid-template-columns: repeat(7, minmax(150px, 1fr));
       gap: 12px;
       padding: 18px 32px 0;
     }
@@ -421,143 +422,151 @@
     .comment-delete { border:none; background:#fee2e2; color:#991b1b; border-radius:8px; padding:5px 8px; cursor:pointer; font-weight:900; }
 
 
-    .top-notifications {
-      position: fixed;
-      top: 22px;
-      right: 28px;
-      z-index: 60;
+    .notification-wrapper {
+      position: relative;
+      margin-left: auto;
     }
 
     .bell-btn {
-      width: 46px;
-      height: 46px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.45);
-      background: rgba(255,255,255,.16);
-      color: white;
-      font-size: 22px;
-      cursor: pointer;
-      backdrop-filter: blur(8px);
       position: relative;
-      box-shadow: 0 10px 24px rgba(0,0,0,.18);
+      width: 44px;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--input);
+      color: var(--blue);
+      cursor: pointer;
+      font-size: 20px;
+      box-shadow: var(--shadow);
     }
 
     .bell-count {
       position: absolute;
-      top: -5px;
-      right: -5px;
+      top: -7px;
+      right: -7px;
       min-width: 21px;
       height: 21px;
       border-radius: 999px;
-      background: #ef4444;
+      background: #dc2626;
       color: white;
-      font-size: 11px;
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
+      font-size: 11px;
       font-weight: 950;
-      border: 2px solid white;
-      padding: 0 5px;
+      padding: 0 6px;
     }
 
-    .notifications-panel {
-      display: none;
+    .bell-count.show { display: flex; }
+
+    .notification-panel {
       position: absolute;
-      top: 54px;
+      top: 52px;
       right: 0;
-      width: min(420px, calc(100vw - 30px));
+      width: min(420px, 90vw);
       max-height: 520px;
-      overflow-y: auto;
+      overflow: auto;
       background: var(--card);
-      color: var(--text);
       border: 1px solid var(--border);
       border-radius: 18px;
       box-shadow: var(--shadow-hover);
       padding: 12px;
+      display: none;
+      z-index: 80;
     }
 
-    .notifications-panel.active { display: block; }
+    .notification-panel.active { display: block; }
 
-    .notifications-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      border-bottom: 1px solid var(--border);
-      padding: 4px 4px 10px;
-      margin-bottom: 8px;
+    .notification-panel h3 {
+      margin: 4px 6px 10px;
+      color: var(--blue);
     }
-
-    .notifications-head strong { color: var(--blue); }
 
     .notification-item {
-      border-radius: 12px;
-      padding: 10px;
       border: 1px solid var(--border);
-      background: rgba(148, 163, 184, .08);
+      border-radius: 14px;
+      padding: 10px;
       margin-bottom: 8px;
-      cursor: pointer;
-    }
-
-    .notification-item.unread {
-      border-left: 5px solid var(--blue);
-      background: rgba(7, 90, 155, .10);
-    }
-
-    .notification-title {
-      font-weight: 950;
-      color: var(--blue);
+      background: rgba(148, 163, 184, .08);
       font-size: 13px;
+    }
+
+    .notification-item strong {
+      color: var(--blue);
+      display: block;
       margin-bottom: 4px;
     }
 
-    .notification-body {
-      font-size: 13px;
-      line-height: 1.35;
-    }
-
-    .notification-date {
-      margin-top: 5px;
-      font-size: 11px;
+    .notification-item small {
+      display: block;
       color: var(--muted);
-      font-weight: 800;
+      margin-top: 6px;
     }
 
-    .task.processing {
+    .task.moving {
       pointer-events: none;
-      opacity: .78;
+      overflow: hidden;
     }
 
-    .task-processing-overlay {
+    .task.moving::before {
+      content: "";
       position: absolute;
       inset: 0;
-      border-radius: 16px;
-      background: rgba(255,255,255,.74);
+      background: rgba(255,255,255,.76);
+      backdrop-filter: blur(4px);
+      z-index: 3;
+    }
+
+    body.dark .task.moving::before {
+      background: rgba(15,23,42,.78);
+    }
+
+    .task.moving::after {
+      content: "Moviendo...";
+      position: absolute;
+      inset: 0;
+      z-index: 4;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 9px;
-      font-weight: 950;
       color: var(--blue);
-      backdrop-filter: blur(2px);
-      z-index: 4;
+      font-weight: 950;
+      font-size: 18px;
+      background:
+        radial-gradient(circle at calc(50% - 62px) center, transparent 0 10px, var(--blue) 11px 13px, transparent 14px);
+      animation: movingPulse .8s ease-in-out infinite alternate;
     }
 
-    body.dark .task-processing-overlay {
-      background: rgba(15,23,42,.76);
+    @keyframes movingPulse {
+      from { opacity: .68; }
+      to { opacity: 1; }
     }
 
-    .mini-spinner {
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(7,90,155,.22);
-      border-top-color: var(--blue);
-      border-radius: 999px;
-      animation: spin .75s linear infinite;
+    .view-comment-compose {
+      display: grid;
+      grid-template-columns: 220px 1fr auto;
+      gap: 8px;
+      margin: 10px 0 14px;
+      align-items: start;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    .view-comment-compose input,
+    .view-comment-compose textarea {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: var(--input);
+      color: var(--text);
+      outline: none;
+    }
+
+    .view-comment-compose textarea { min-height: 44px; resize: vertical; }
+
+    .pdf-note {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      margin-left: 4px;
     }
 
     @media (max-width: 1200px) {
@@ -581,19 +590,6 @@
     <p>Gestión de mejoras, ajustes, bugs y nuevas funcionalidades del Iniciador de Trámites Web.</p>
   </header>
 
-  <div class="top-notifications">
-    <button class="bell-btn" onclick="toggleNotifications()" title="Notificaciones">🔔
-      <span class="bell-count" id="bellCount" style="display:none;">0</span>
-    </button>
-    <div class="notifications-panel" id="notificationsPanel">
-      <div class="notifications-head">
-        <strong>Notificaciones</strong>
-        <button class="small-btn" onclick="markNotificationsRead()">Marcar leídas</button>
-      </div>
-      <div id="notificationsList"></div>
-    </div>
-  </div>
-
   <section class="dashboard" id="dashboard"></section>
 
   <section class="toolbar">
@@ -601,9 +597,17 @@
     <button class="btn secondary" onclick="exportJSON()">Exportar JSON</button>
     <button class="btn secondary" onclick="importJSON()">Importar JSON</button>
     <button class="btn success" onclick="exportExcel()">Exportar Excel</button>
+    <button class="btn" onclick="generateMeetingPDF()">Resumen PDF</button>
     <button class="btn secondary" onclick="toggleDarkMode()">Modo oscuro</button>
     <input type="file" id="importFile" accept=".json" hidden />
     <input class="search" id="searchInput" placeholder="Buscar por título, descripción o ID..." oninput="renderTasks()" />
+    <div class="notification-wrapper">
+      <button class="bell-btn" onclick="toggleNotifications()" title="Notificaciones">🔔<span class="bell-count" id="notificationCount">0</span></button>
+      <div class="notification-panel" id="notificationPanel">
+        <h3>Notificaciones</h3>
+        <div id="notificationList"><div class="empty">Sin notificaciones</div></div>
+      </div>
+    </div>
     <select class="sort-select" id="sortSelect" onchange="renderTasks()">
       <option value="manual">Orden manual</option>
       <option value="updated_desc">Última modificación</option>
@@ -637,7 +641,7 @@
             <option value="urgente">Prioridad alta / urgente</option>
             <option value="desarrollo">En desarrollo</option>
             <option value="pendiente">Pendiente</option>
-            <option value="test_usuario">Test de usuario</option>
+            <option value="test_usuario">Test de Usuario</option>
             <option value="definicion">Pendiente de definición / análisis</option>
             <option value="implementado">Implementado</option>
           </select>
@@ -687,8 +691,8 @@
     const SUPABASE_URL = "https://mygijycrfrbiqjachhxy.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_90DLZu5l2xkJHRjYg8ytvQ_s0tIr7Hr";
     const TASKS_TABLE = "tasks";
-    const NOTIFICATIONS_TABLE = "notifications";
     const STORAGE_BUCKET = "task-images";
+    const NOTIFICATIONS_TABLE = "notifications";
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -728,14 +732,14 @@
     ];
 
     let tasks = [];
+    let notifications = [];
+    let unreadNotifications = Number(sessionStorage.getItem("itw_unread_notifications") || "0");
     let selectedImages = [];
     let realtimeChannel = null;
-    let notificationsChannel = null;
-    let notifications = [];
-    let movingTaskIds = new Set();
     let isSaving = false;
     let draggedTaskId = null;
     let placeholder = null;
+    const movingTaskIds = new Set();
 
     document.addEventListener("DOMContentLoaded", initApp);
 
@@ -824,7 +828,6 @@
       realtimeChannel = supabaseClient
         .channel("tasks-realtime")
         .on("postgres_changes", { event: "*", schema: "public", table: TASKS_TABLE }, async () => {
-          if (isSaving) return;
           await loadTasks();
           renderTasks();
         })
@@ -918,7 +921,7 @@
 
     function createTaskCard(task) {
       const card = document.createElement("article");
-      card.className = movingTaskIds.has(task.id) ? "task processing" : "task";
+      card.className = movingTaskIds.has(task.id) ? "task moving" : "task";
       card.draggable = true;
       card.dataset.id = task.id;
       card.addEventListener("dragstart", event => dragTask(event, task.id));
@@ -946,13 +949,6 @@
           <button class="small-btn delete" onclick="deleteTask('${task.id}')">Eliminar</button>
         </div>
       `;
-
-      if (movingTaskIds.has(task.id)) {
-        const overlay = document.createElement("div");
-        overlay.className = "task-processing-overlay";
-        overlay.innerHTML = `<span class="mini-spinner"></span><span>Moviendo...</span>`;
-        card.appendChild(overlay);
-      }
 
       return card;
     }
@@ -1058,8 +1054,7 @@
         const images = await uploadSelectedImages(id);
         const history = [...(oldTask?.history || [])];
 
-        const changedStatus = oldTask && oldTask.status !== status;
-        if (changedStatus) {
+        if (oldTask && oldTask.status !== status) {
           history.push({
             from: oldTask.status,
             to: status,
@@ -1076,8 +1071,13 @@
         if (error) {
           console.error(error);
           alert("No se pudo actualizar la tarea.");
-        } else if (changedStatus) {
-          await createNotification("move", `Cambio de estado: ${oldTask.code || ""}`, `${oldTask.title} pasó de ${getColumnTitle(oldTask.status)} a ${getColumnTitle(status)}.`, id);
+        } else if (oldTask && oldTask.status !== status) {
+          await createNotification(
+            "status_change",
+            "Cambio de estado",
+            `${oldTask.code} - ${oldTask.title} pasó de ${getColumnTitle(oldTask.status)} a ${getColumnTitle(status)}.`,
+            id
+          );
         }
       } else {
         const code = await generateNextCode();
@@ -1103,17 +1103,17 @@
           console.error(error);
           alert("No se pudo crear la tarea.");
         } else {
-          await createNotification("create", `Nueva tarea: ${code}`, `${title} fue creada en ${getColumnTitle(status)}.`, tempId);
+          await createNotification(
+            "new_task",
+            "Nueva tarea creada",
+            `${code} - ${title} fue creada en ${getColumnTitle(status)}.`,
+            tempId
+          );
         }
       }
 
       closeModal();
-      if (movedTask && oldStatus !== newStatus) {
-        await createNotification("move", `Cambio de estado: ${movedTask.code || ""}`, `${movedTask.title} pasó de ${getColumnTitle(oldStatus)} a ${getColumnTitle(newStatus)}.`, movedId);
-      }
-
       await loadTasks();
-      movingTaskIds.delete(movedId);
       renderTasks();
       isSaving = false;
     }
@@ -1243,18 +1243,23 @@
     }
 
     async function applyReorder(movedId, newStatus, orderedIdsInTarget) {
+      const movedTask = tasks.find(t => t.id === movedId);
+      if (!movedTask) return;
+
       isSaving = true;
       movingTaskIds.add(movedId);
-      const now = new Date().toISOString();
-      const movedTask = tasks.find(t => t.id === movedId);
-      const oldStatus = movedTask?.status;
 
-      if (movedTask) {
-        movedTask.status = newStatus;
-        movedTask.position = orderedIdsInTarget.indexOf(movedId) + 1;
-        movedTask.updated_at = now;
-        renderTasks();
-      }
+      const now = new Date().toISOString();
+      const oldStatus = movedTask.status;
+      const oldTitle = movedTask.title;
+      const oldCode = movedTask.code;
+
+      // Optimista: se mueve visualmente al instante, pero la tarjeta queda con loading propio.
+      tasks = tasks.map(t => {
+        if (t.id === movedId) return { ...t, status: newStatus, updated_at: now };
+        return t;
+      });
+      renderTasks();
 
       const updates = [];
 
@@ -1272,29 +1277,41 @@
         });
       }
 
-      for (const item of updates) {
-        const payload = { status: item.status, position: item.position, updated_at: item.updated_at };
+      try {
+        await Promise.all(updates.map(item => {
+          const payload = { status: item.status, position: item.position, updated_at: item.updated_at };
 
-        if (item.id === movedId && oldStatus !== newStatus) {
-          payload.history = [...(movedTask.history || []), {
-            from: oldStatus,
-            to: newStatus,
-            date: now,
-            text: `Movimiento de ${getColumnTitle(oldStatus)} a ${getColumnTitle(newStatus)}`
-          }];
+          if (item.id === movedId && oldStatus !== newStatus) {
+            payload.history = [...(movedTask.history || []), {
+              from: oldStatus,
+              to: newStatus,
+              date: now,
+              text: `Movimiento de ${getColumnTitle(oldStatus)} a ${getColumnTitle(newStatus)}`
+            }];
+          }
+
+          return supabaseClient.from(TASKS_TABLE).update(payload).eq("id", item.id);
+        }));
+
+        if (oldStatus !== newStatus) {
+          await createNotification(
+            "status_change",
+            "Cambio de estado",
+            `${oldCode} - ${oldTitle} pasó de ${getColumnTitle(oldStatus)} a ${getColumnTitle(newStatus)}.`,
+            movedId
+          );
         }
 
-        const { error } = await supabaseClient.from(TASKS_TABLE).update(payload).eq("id", item.id);
-        if (error) {
-          console.error(error);
-          alert("No se pudo reubicar la tarea. Revisá que exista la columna position.");
-          break;
-        }
+        await loadTasks();
+      } catch (err) {
+        console.error(err);
+        alert("No se pudo reubicar la tarea.");
+        await loadTasks();
+      } finally {
+        movingTaskIds.delete(movedId);
+        isSaving = false;
+        renderTasks();
       }
-
-      await loadTasks();
-      renderTasks();
-      isSaving = false;
     }
 
     function endDrag() {
@@ -1328,12 +1345,13 @@
           <span class="badge">Modificado ${formatDate(task.updated_at)}</span>
         </div>
         ${task.images?.length ? `<h3>Adjuntos</h3><div class="task-images">${images}</div>` : ""}
-        <h3>Comentarios</h3><div class="comments-box">${comments}</div>
-        <div class="comment-compose">
+        <h3>Comentarios</h3>
+        <div class="view-comment-compose">
           <input id="viewCommentAuthor" placeholder="Nombre obligatorio" />
-          <textarea id="viewNewComment" placeholder="Escribí un comentario..."></textarea>
-          <button class="btn secondary" type="button" onclick="addCommentFromView('${task.id}')">Agregar</button>
+          <textarea id="viewNewComment" placeholder="Agregar comentario..."></textarea>
+          <button class="btn secondary" onclick="addCommentFromView('${task.id}')">Agregar</button>
         </div>
+        <div class="comments-box" id="viewCommentsBox">${comments}</div>
         <h3>Historial</h3><div class="history-box">${history}</div>
         <div class="modal-actions">
           <button class="btn secondary" onclick="closeViewModal()">Cerrar</button>
@@ -1379,7 +1397,12 @@
         return;
       }
 
-      await createNotification("comment", `Nuevo comentario: ${task.code || ""}`, `${author} comentó en "${task.title}".`, id);
+      await createNotification(
+        "comment",
+        "Nuevo comentario",
+        `${author} comentó en ${task.code} - ${task.title}: ${text.slice(0, 120)}${text.length > 120 ? "..." : ""}`,
+        id
+      );
 
       document.getElementById("newComment").value = "";
       await loadTasks();
@@ -1438,33 +1461,34 @@
         : `<div class="empty">Sin movimientos</div>`;
     }
 
-
-    async function addCommentFromView(id) {
+    async function addCommentFromView(taskId) {
       const authorEl = document.getElementById("viewCommentAuthor");
       const textEl = document.getElementById("viewNewComment");
-      const author = authorEl?.value.trim();
-      const text = textEl?.value.trim();
+      const author = authorEl.value.trim();
+      const text = textEl.value.trim();
 
       if (!author) {
         alert("Ingresá el nombre de quien comenta.");
-        authorEl?.focus();
+        authorEl.focus();
         return;
       }
+
       if (!text) {
         alert("Ingresá el comentario.");
-        textEl?.focus();
+        textEl.focus();
         return;
       }
 
-      const task = tasks.find(t => t.id === id);
+      const task = tasks.find(t => t.id === taskId);
       if (!task) return;
 
-      const comments = [...(task.comments || []), { author, text, date: new Date().toISOString() }];
+      const now = new Date().toISOString();
+      const comments = [...(task.comments || []), { author, text, date: now }];
 
       const { error } = await supabaseClient
         .from(TASKS_TABLE)
-        .update({ comments, updated_at: new Date().toISOString() })
-        .eq("id", id);
+        .update({ comments, updated_at: now })
+        .eq("id", taskId);
 
       if (error) {
         console.error(error);
@@ -1472,10 +1496,17 @@
         return;
       }
 
-      await createNotification("comment", `Nuevo comentario: ${task.code || ""}`, `${author} comentó en "${task.title}".`, id);
+      await createNotification(
+        "comment",
+        "Nuevo comentario",
+        `${author} comentó en ${task.code} - ${task.title}: ${text.slice(0, 120)}${text.length > 120 ? "..." : ""}`,
+        taskId
+      );
+
+      textEl.value = "";
       await loadTasks();
+      viewTask(taskId);
       renderTasks();
-      viewTask(id);
     }
 
     async function loadNotifications() {
@@ -1483,10 +1514,10 @@
         .from(NOTIFICATIONS_TABLE)
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(60);
+        .limit(40);
 
       if (error) {
-        console.warn("No se pudieron cargar notificaciones. Verificá que exista la tabla notifications.", error);
+        console.warn("No se pudieron cargar notificaciones. Creá la tabla notifications si todavía no existe.", error);
         notifications = [];
         return;
       }
@@ -1494,91 +1525,208 @@
       notifications = data || [];
     }
 
-    function listenNotificationsRealtime() {
-      if (notificationsChannel) supabaseClient.removeChannel(notificationsChannel);
+    async function createNotification(type, title, body, taskId = null) {
+      const { error } = await supabaseClient
+        .from(NOTIFICATIONS_TABLE)
+        .insert({ type, title, body, task_id: taskId });
 
-      notificationsChannel = supabaseClient
+      if (error) console.warn("No se pudo crear la notificación.", error);
+    }
+
+    function listenNotificationsRealtime() {
+      supabaseClient
         .channel("notifications-realtime")
-        .on("postgres_changes", { event: "*", schema: "public", table: NOTIFICATIONS_TABLE }, async () => {
-          await loadNotifications();
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: NOTIFICATIONS_TABLE }, async payload => {
+          notifications = [payload.new, ...notifications].slice(0, 40);
+          unreadNotifications += 1;
+          sessionStorage.setItem("itw_unread_notifications", String(unreadNotifications));
           renderNotifications();
         })
         .subscribe();
     }
 
-    async function createNotification(type, title, body, taskId) {
-      const payload = {
-        type,
-        title,
-        body,
-        task_id: taskId || null,
-        created_at: new Date().toISOString()
-      };
+    function toggleNotifications() {
+      const panel = document.getElementById("notificationPanel");
+      panel.classList.toggle("active");
 
-      const { error } = await supabaseClient.from(NOTIFICATIONS_TABLE).insert(payload);
-
-      if (error) {
-        console.warn("No se pudo crear la notificación. Revisá tabla/políticas de notifications.", error);
+      if (panel.classList.contains("active")) {
+        unreadNotifications = 0;
+        sessionStorage.setItem("itw_unread_notifications", "0");
+        renderNotifications();
       }
-    }
-
-    function getReadNotificationIds() {
-      try {
-        return JSON.parse(localStorage.getItem("itw_read_notifications") || "[]");
-      } catch {
-        return [];
-      }
-    }
-
-    function setReadNotificationIds(ids) {
-      localStorage.setItem("itw_read_notifications", JSON.stringify([...new Set(ids)]));
     }
 
     function renderNotifications() {
-      const list = document.getElementById("notificationsList");
-      const count = document.getElementById("bellCount");
-      if (!list || !count) return;
+      const count = document.getElementById("notificationCount");
+      const list = document.getElementById("notificationList");
 
-      const readIds = getReadNotificationIds();
-      const unread = notifications.filter(n => !readIds.includes(n.id));
+      count.textContent = unreadNotifications;
+      count.classList.toggle("show", unreadNotifications > 0);
 
-      count.textContent = unread.length;
-      count.style.display = unread.length ? "flex" : "none";
+      list.innerHTML = notifications.length
+        ? notifications.map(n => `
+          <div class="notification-item">
+            <strong>${escapeHtml(n.title || "Notificación")}</strong>
+            <div>${escapeHtml(n.body || "")}</div>
+            <small>${formatDate(n.created_at)}</small>
+          </div>
+        `).join("")
+        : `<div class="empty">Sin notificaciones</div>`;
+    }
 
-      if (!notifications.length) {
-        list.innerHTML = `<div class="empty">Sin notificaciones</div>`;
-        return;
+    async function generateMeetingPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 14;
+
+      const generatedAt = new Date().toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" });
+      const total = tasks.length;
+
+      const colors = {
+        urgente: [239, 68, 68],
+        desarrollo: [249, 115, 22],
+        pendiente: [234, 179, 8],
+        test_usuario: [139, 92, 246],
+        definicion: [148, 163, 184],
+        implementado: [34, 197, 94]
+      };
+
+      function addHeaderFooter(pageNumberText = "") {
+        doc.setFillColor(7, 90, 155);
+        doc.rect(0, 0, pageWidth, 18, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.text("Backlog ITW - Resumen ejecutivo", margin, 11);
+
+        doc.setTextColor(120, 130, 150);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.text(`Generado: ${generatedAt}`, margin, pageHeight - 8);
+        if (pageNumberText) doc.text(pageNumberText, pageWidth - margin, pageHeight - 8, { align: "right" });
       }
 
-      list.innerHTML = notifications.map(n => {
-        const unreadClass = readIds.includes(n.id) ? "" : "unread";
-        return `
-          <div class="notification-item ${unreadClass}" onclick="openNotification('${n.id}', '${n.task_id || ""}')">
-            <div class="notification-title">${escapeHtml(n.title || "Notificación")}</div>
-            <div class="notification-body">${escapeHtml(n.body || "")}</div>
-            <div class="notification-date">${formatDate(n.created_at)}</div>
-          </div>
-        `;
-      }).join("");
-    }
+      addHeaderFooter();
 
-    function toggleNotifications() {
-      const panel = document.getElementById("notificationsPanel");
-      panel.classList.toggle("active");
-    }
+      doc.setTextColor(20, 32, 51);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.text("Resumen general del backlog", margin, 34);
 
-    function markNotificationsRead() {
-      setReadNotificationIds(notifications.map(n => n.id));
-      renderNotifications();
-    }
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(90, 100, 120);
+      doc.text("Documento generado automáticamente para reunión de seguimiento, priorización y control funcional.", margin, 42);
 
-    function openNotification(notificationId, taskId) {
-      const readIds = getReadNotificationIds();
-      setReadNotificationIds([...readIds, notificationId]);
-      renderNotifications();
-      if (taskId) viewTask(taskId);
-    }
+      const summaryRows = [
+        ["Total de tareas", total],
+        ["Prioridad Alta / Urgente", countByStatus("urgente")],
+        ["En Desarrollo", countByStatus("desarrollo")],
+        ["Pendientes", countByStatus("pendiente")],
+        ["Test de Usuario", countByStatus("test_usuario")],
+        ["Pendientes de Definición / Análisis", countByStatus("definicion")],
+        ["Implementadas", countByStatus("implementado")]
+      ];
 
+      doc.autoTable({
+        startY: 52,
+        head: [["Indicador", "Cantidad"]],
+        body: summaryRows,
+        theme: "grid",
+        headStyles: { fillColor: [7, 90, 155], textColor: 255, fontStyle: "bold" },
+        styles: { fontSize: 10, cellPadding: 3 },
+        columnStyles: { 1: { halign: "center", fontStyle: "bold" } },
+        margin: { left: margin, right: margin }
+      });
+
+      let y = doc.lastAutoTable.finalY + 12;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(7, 90, 155);
+      doc.text("Distribución por categoría", margin, y);
+
+      y += 5;
+      columns.forEach((col, index) => {
+        const x = margin + (index % 3) * 61;
+        const yy = y + Math.floor(index / 3) * 22;
+        const c = colors[col.id] || [7, 90, 155];
+
+        doc.setFillColor(c[0], c[1], c[2]);
+        doc.roundedRect(x, yy, 54, 16, 3, 3, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(13);
+        doc.text(String(countByStatus(col.id)), x + 5, yy + 7);
+        doc.setFontSize(7.5);
+        doc.text(col.title.slice(0, 28), x + 5, yy + 12);
+      });
+
+      doc.addPage();
+      addHeaderFooter();
+
+      columns.forEach((col, colIndex) => {
+        const colTasks = tasks
+          .filter(t => t.status === col.id)
+          .sort((a, b) => (a.position || 999999) - (b.position || 999999));
+
+        if (colIndex > 0) {
+          doc.addPage();
+          addHeaderFooter();
+        }
+
+        const c = colors[col.id] || [7, 90, 155];
+        doc.setFillColor(c[0], c[1], c[2]);
+        doc.roundedRect(margin, 28, pageWidth - margin * 2, 12, 2, 2, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(13);
+        doc.text(`${col.title} (${colTasks.length})`, margin + 4, 36);
+
+        if (!colTasks.length) {
+          doc.setTextColor(90, 100, 120);
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(10);
+          doc.text("No hay tareas registradas en esta categoría.", margin, 52);
+          return;
+        }
+
+        doc.autoTable({
+          startY: 48,
+          head: [["ID", "Tarea", "Descripción", "Comentarios", "Actualizado"]],
+          body: colTasks.map(t => [
+            t.code || "-",
+            t.title || "-",
+            t.description || "-",
+            String((t.comments || []).length),
+            formatDate(t.updated_at)
+          ]),
+          theme: "grid",
+          headStyles: { fillColor: c, textColor: 255, fontStyle: "bold" },
+          styles: { fontSize: 8.5, cellPadding: 2.4, overflow: "linebreak", valign: "top" },
+          columnStyles: {
+            0: { cellWidth: 20, fontStyle: "bold" },
+            1: { cellWidth: 42, fontStyle: "bold" },
+            2: { cellWidth: 80 },
+            3: { cellWidth: 22, halign: "center" },
+            4: { cellWidth: 26 }
+          },
+          margin: { left: margin, right: margin },
+          didDrawPage: () => addHeaderFooter()
+        });
+      });
+
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        addHeaderFooter(`Página ${i} de ${pageCount}`);
+      }
+
+      doc.save(`Resumen_Backlog_ITW_${new Date().toISOString().slice(0,10)}.pdf`);
+    }
 
     function exportJSON() {
       const data = JSON.stringify(tasks, null, 2);
