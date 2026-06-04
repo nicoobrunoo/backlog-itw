@@ -25,6 +25,7 @@
       --yellow: #eab308;
       --gray: #94a3b8;
       --green: #22c55e;
+      --purple: #8b5cf6;
       --danger: #dc2626;
       --soft: #edf3f9;
       --input: #ffffff;
@@ -69,7 +70,7 @@
 
     .dashboard {
       display: grid;
-      grid-template-columns: repeat(6, minmax(150px, 1fr));
+      grid-template-columns: repeat(7, minmax(145px, 1fr));
       gap: 12px;
       padding: 18px 32px 0;
     }
@@ -147,7 +148,7 @@
 
     .board {
       display: grid;
-      grid-template-columns: repeat(5, minmax(300px, 1fr));
+      grid-template-columns: repeat(6, minmax(300px, 1fr));
       gap: 18px;
       padding: 12px 32px 24px;
       overflow-x: auto;
@@ -182,6 +183,7 @@
     .yellow { background: linear-gradient(135deg, #eab308, #a16207); }
     .gray { background: linear-gradient(135deg, #94a3b8, #475569); }
     .green { background: linear-gradient(135deg, #22c55e, #15803d); }
+    .purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
 
     .task-list {
       padding: 12px;
@@ -418,9 +420,149 @@
     .comment-author { font-weight:950; color: var(--blue); }
     .comment-delete { border:none; background:#fee2e2; color:#991b1b; border-radius:8px; padding:5px 8px; cursor:pointer; font-weight:900; }
 
+
+    .top-notifications {
+      position: fixed;
+      top: 22px;
+      right: 28px;
+      z-index: 60;
+    }
+
+    .bell-btn {
+      width: 46px;
+      height: 46px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.45);
+      background: rgba(255,255,255,.16);
+      color: white;
+      font-size: 22px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      position: relative;
+      box-shadow: 0 10px 24px rgba(0,0,0,.18);
+    }
+
+    .bell-count {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      min-width: 21px;
+      height: 21px;
+      border-radius: 999px;
+      background: #ef4444;
+      color: white;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 950;
+      border: 2px solid white;
+      padding: 0 5px;
+    }
+
+    .notifications-panel {
+      display: none;
+      position: absolute;
+      top: 54px;
+      right: 0;
+      width: min(420px, calc(100vw - 30px));
+      max-height: 520px;
+      overflow-y: auto;
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow-hover);
+      padding: 12px;
+    }
+
+    .notifications-panel.active { display: block; }
+
+    .notifications-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+      padding: 4px 4px 10px;
+      margin-bottom: 8px;
+    }
+
+    .notifications-head strong { color: var(--blue); }
+
+    .notification-item {
+      border-radius: 12px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      background: rgba(148, 163, 184, .08);
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+
+    .notification-item.unread {
+      border-left: 5px solid var(--blue);
+      background: rgba(7, 90, 155, .10);
+    }
+
+    .notification-title {
+      font-weight: 950;
+      color: var(--blue);
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .notification-body {
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .notification-date {
+      margin-top: 5px;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .task.processing {
+      pointer-events: none;
+      opacity: .78;
+    }
+
+    .task-processing-overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      background: rgba(255,255,255,.74);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      font-weight: 950;
+      color: var(--blue);
+      backdrop-filter: blur(2px);
+      z-index: 4;
+    }
+
+    body.dark .task-processing-overlay {
+      background: rgba(15,23,42,.76);
+    }
+
+    .mini-spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(7,90,155,.22);
+      border-top-color: var(--blue);
+      border-radius: 999px;
+      animation: spin .75s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
     @media (max-width: 1200px) {
       .dashboard { grid-template-columns: repeat(3, 1fr); }
-      .board { grid-template-columns: repeat(5, 300px); }
+      .board { grid-template-columns: repeat(6, 300px); }
     }
 
     @media (max-width: 760px) {
@@ -428,7 +570,7 @@
       header h1 { font-size: 22px; }
       .dashboard { grid-template-columns: repeat(2, 1fr); }
       .form-grid, .comment-compose { grid-template-columns: 1fr; }
-      .board { grid-template-columns: repeat(5, 285px); }
+      .board { grid-template-columns: repeat(6, 285px); }
     }
   </style>
 </head>
@@ -438,6 +580,19 @@
     <h1>Backlog ITW - Tablero Kanban</h1>
     <p>Gestión de mejoras, ajustes, bugs y nuevas funcionalidades del Iniciador de Trámites Web.</p>
   </header>
+
+  <div class="top-notifications">
+    <button class="bell-btn" onclick="toggleNotifications()" title="Notificaciones">🔔
+      <span class="bell-count" id="bellCount" style="display:none;">0</span>
+    </button>
+    <div class="notifications-panel" id="notificationsPanel">
+      <div class="notifications-head">
+        <strong>Notificaciones</strong>
+        <button class="small-btn" onclick="markNotificationsRead()">Marcar leídas</button>
+      </div>
+      <div id="notificationsList"></div>
+    </div>
+  </div>
 
   <section class="dashboard" id="dashboard"></section>
 
@@ -482,6 +637,7 @@
             <option value="urgente">Prioridad alta / urgente</option>
             <option value="desarrollo">En desarrollo</option>
             <option value="pendiente">Pendiente</option>
+            <option value="test_usuario">Test de usuario</option>
             <option value="definicion">Pendiente de definición / análisis</option>
             <option value="implementado">Implementado</option>
           </select>
@@ -531,6 +687,7 @@
     const SUPABASE_URL = "https://mygijycrfrbiqjachhxy.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_90DLZu5l2xkJHRjYg8ytvQ_s0tIr7Hr";
     const TASKS_TABLE = "tasks";
+    const NOTIFICATIONS_TABLE = "notifications";
     const STORAGE_BUCKET = "task-images";
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -539,6 +696,7 @@
       { id: "urgente", title: "Prioridad Alta / Urgente", class: "red" },
       { id: "desarrollo", title: "En Desarrollo", class: "orange" },
       { id: "pendiente", title: "Pendientes", class: "yellow" },
+      { id: "test_usuario", title: "Test de Usuario", class: "purple" },
       { id: "definicion", title: "Pendientes de Definición / Análisis", class: "gray" },
       { id: "implementado", title: "Implementado", class: "green" }
     ];
@@ -572,6 +730,9 @@
     let tasks = [];
     let selectedImages = [];
     let realtimeChannel = null;
+    let notificationsChannel = null;
+    let notifications = [];
+    let movingTaskIds = new Set();
     let isSaving = false;
     let draggedTaskId = null;
     let placeholder = null;
@@ -583,8 +744,11 @@
       bindImageInput();
       await loadTasks();
       await seedInitialTasksIfEmpty();
+      await loadNotifications();
       listenRealtime();
+      listenNotificationsRealtime();
       renderTasks();
+      renderNotifications();
       setStatus("Conectado a Supabase. Los cambios se sincronizan en tiempo real.");
     }
 
@@ -700,6 +864,7 @@
         { label: "Urgentes", value: countByStatus("urgente") },
         { label: "En Desarrollo", value: countByStatus("desarrollo") },
         { label: "Pendientes", value: countByStatus("pendiente") },
+        { label: "Test Usuario", value: countByStatus("test_usuario") },
         { label: "En Análisis", value: countByStatus("definicion") },
         { label: "Implementadas", value: countByStatus("implementado") }
       ];
@@ -753,7 +918,7 @@
 
     function createTaskCard(task) {
       const card = document.createElement("article");
-      card.className = "task";
+      card.className = movingTaskIds.has(task.id) ? "task processing" : "task";
       card.draggable = true;
       card.dataset.id = task.id;
       card.addEventListener("dragstart", event => dragTask(event, task.id));
@@ -781,6 +946,13 @@
           <button class="small-btn delete" onclick="deleteTask('${task.id}')">Eliminar</button>
         </div>
       `;
+
+      if (movingTaskIds.has(task.id)) {
+        const overlay = document.createElement("div");
+        overlay.className = "task-processing-overlay";
+        overlay.innerHTML = `<span class="mini-spinner"></span><span>Moviendo...</span>`;
+        card.appendChild(overlay);
+      }
 
       return card;
     }
@@ -886,7 +1058,8 @@
         const images = await uploadSelectedImages(id);
         const history = [...(oldTask?.history || [])];
 
-        if (oldTask && oldTask.status !== status) {
+        const changedStatus = oldTask && oldTask.status !== status;
+        if (changedStatus) {
           history.push({
             from: oldTask.status,
             to: status,
@@ -903,6 +1076,8 @@
         if (error) {
           console.error(error);
           alert("No se pudo actualizar la tarea.");
+        } else if (changedStatus) {
+          await createNotification("move", `Cambio de estado: ${oldTask.code || ""}`, `${oldTask.title} pasó de ${getColumnTitle(oldTask.status)} a ${getColumnTitle(status)}.`, id);
         }
       } else {
         const code = await generateNextCode();
@@ -927,11 +1102,18 @@
         if (error) {
           console.error(error);
           alert("No se pudo crear la tarea.");
+        } else {
+          await createNotification("create", `Nueva tarea: ${code}`, `${title} fue creada en ${getColumnTitle(status)}.`, tempId);
         }
       }
 
       closeModal();
+      if (movedTask && oldStatus !== newStatus) {
+        await createNotification("move", `Cambio de estado: ${movedTask.code || ""}`, `${movedTask.title} pasó de ${getColumnTitle(oldStatus)} a ${getColumnTitle(newStatus)}.`, movedId);
+      }
+
       await loadTasks();
+      movingTaskIds.delete(movedId);
       renderTasks();
       isSaving = false;
     }
@@ -1062,9 +1244,17 @@
 
     async function applyReorder(movedId, newStatus, orderedIdsInTarget) {
       isSaving = true;
+      movingTaskIds.add(movedId);
       const now = new Date().toISOString();
       const movedTask = tasks.find(t => t.id === movedId);
       const oldStatus = movedTask?.status;
+
+      if (movedTask) {
+        movedTask.status = newStatus;
+        movedTask.position = orderedIdsInTarget.indexOf(movedId) + 1;
+        movedTask.updated_at = now;
+        renderTasks();
+      }
 
       const updates = [];
 
@@ -1139,6 +1329,11 @@
         </div>
         ${task.images?.length ? `<h3>Adjuntos</h3><div class="task-images">${images}</div>` : ""}
         <h3>Comentarios</h3><div class="comments-box">${comments}</div>
+        <div class="comment-compose">
+          <input id="viewCommentAuthor" placeholder="Nombre obligatorio" />
+          <textarea id="viewNewComment" placeholder="Escribí un comentario..."></textarea>
+          <button class="btn secondary" type="button" onclick="addCommentFromView('${task.id}')">Agregar</button>
+        </div>
         <h3>Historial</h3><div class="history-box">${history}</div>
         <div class="modal-actions">
           <button class="btn secondary" onclick="closeViewModal()">Cerrar</button>
@@ -1183,6 +1378,8 @@
         alert("No se pudo agregar el comentario.");
         return;
       }
+
+      await createNotification("comment", `Nuevo comentario: ${task.code || ""}`, `${author} comentó en "${task.title}".`, id);
 
       document.getElementById("newComment").value = "";
       await loadTasks();
@@ -1240,6 +1437,148 @@
         ? history.map(h => `<div class="history-item">${escapeHtml(h.text)}<small>${formatDate(h.date)}</small></div>`).join("")
         : `<div class="empty">Sin movimientos</div>`;
     }
+
+
+    async function addCommentFromView(id) {
+      const authorEl = document.getElementById("viewCommentAuthor");
+      const textEl = document.getElementById("viewNewComment");
+      const author = authorEl?.value.trim();
+      const text = textEl?.value.trim();
+
+      if (!author) {
+        alert("Ingresá el nombre de quien comenta.");
+        authorEl?.focus();
+        return;
+      }
+      if (!text) {
+        alert("Ingresá el comentario.");
+        textEl?.focus();
+        return;
+      }
+
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+
+      const comments = [...(task.comments || []), { author, text, date: new Date().toISOString() }];
+
+      const { error } = await supabaseClient
+        .from(TASKS_TABLE)
+        .update({ comments, updated_at: new Date().toISOString() })
+        .eq("id", id);
+
+      if (error) {
+        console.error(error);
+        alert("No se pudo agregar el comentario.");
+        return;
+      }
+
+      await createNotification("comment", `Nuevo comentario: ${task.code || ""}`, `${author} comentó en "${task.title}".`, id);
+      await loadTasks();
+      renderTasks();
+      viewTask(id);
+    }
+
+    async function loadNotifications() {
+      const { data, error } = await supabaseClient
+        .from(NOTIFICATIONS_TABLE)
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(60);
+
+      if (error) {
+        console.warn("No se pudieron cargar notificaciones. Verificá que exista la tabla notifications.", error);
+        notifications = [];
+        return;
+      }
+
+      notifications = data || [];
+    }
+
+    function listenNotificationsRealtime() {
+      if (notificationsChannel) supabaseClient.removeChannel(notificationsChannel);
+
+      notificationsChannel = supabaseClient
+        .channel("notifications-realtime")
+        .on("postgres_changes", { event: "*", schema: "public", table: NOTIFICATIONS_TABLE }, async () => {
+          await loadNotifications();
+          renderNotifications();
+        })
+        .subscribe();
+    }
+
+    async function createNotification(type, title, body, taskId) {
+      const payload = {
+        type,
+        title,
+        body,
+        task_id: taskId || null,
+        created_at: new Date().toISOString()
+      };
+
+      const { error } = await supabaseClient.from(NOTIFICATIONS_TABLE).insert(payload);
+
+      if (error) {
+        console.warn("No se pudo crear la notificación. Revisá tabla/políticas de notifications.", error);
+      }
+    }
+
+    function getReadNotificationIds() {
+      try {
+        return JSON.parse(localStorage.getItem("itw_read_notifications") || "[]");
+      } catch {
+        return [];
+      }
+    }
+
+    function setReadNotificationIds(ids) {
+      localStorage.setItem("itw_read_notifications", JSON.stringify([...new Set(ids)]));
+    }
+
+    function renderNotifications() {
+      const list = document.getElementById("notificationsList");
+      const count = document.getElementById("bellCount");
+      if (!list || !count) return;
+
+      const readIds = getReadNotificationIds();
+      const unread = notifications.filter(n => !readIds.includes(n.id));
+
+      count.textContent = unread.length;
+      count.style.display = unread.length ? "flex" : "none";
+
+      if (!notifications.length) {
+        list.innerHTML = `<div class="empty">Sin notificaciones</div>`;
+        return;
+      }
+
+      list.innerHTML = notifications.map(n => {
+        const unreadClass = readIds.includes(n.id) ? "" : "unread";
+        return `
+          <div class="notification-item ${unreadClass}" onclick="openNotification('${n.id}', '${n.task_id || ""}')">
+            <div class="notification-title">${escapeHtml(n.title || "Notificación")}</div>
+            <div class="notification-body">${escapeHtml(n.body || "")}</div>
+            <div class="notification-date">${formatDate(n.created_at)}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function toggleNotifications() {
+      const panel = document.getElementById("notificationsPanel");
+      panel.classList.toggle("active");
+    }
+
+    function markNotificationsRead() {
+      setReadNotificationIds(notifications.map(n => n.id));
+      renderNotifications();
+    }
+
+    function openNotification(notificationId, taskId) {
+      const readIds = getReadNotificationIds();
+      setReadNotificationIds([...readIds, notificationId]);
+      renderNotifications();
+      if (taskId) viewTask(taskId);
+    }
+
 
     function exportJSON() {
       const data = JSON.stringify(tasks, null, 2);
