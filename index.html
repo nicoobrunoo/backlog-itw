@@ -27,6 +27,7 @@
       --yellow: #eab308;
       --gray: #94a3b8;
       --green: #22c55e;
+      --teal: #14b8a6;
       --danger: #dc2626;
       --soft: #edf3f9;
       --input: #ffffff;
@@ -71,7 +72,7 @@
 
     .dashboard {
       display: grid;
-      grid-template-columns: repeat(7, minmax(150px, 1fr));
+      grid-template-columns: repeat(8, minmax(150px, 1fr));
       gap: 12px;
       padding: 18px 32px 0;
     }
@@ -149,7 +150,7 @@
 
     .board {
       display: grid;
-      grid-template-columns: repeat(6, minmax(300px, 1fr));
+      grid-template-columns: repeat(7, minmax(300px, 1fr));
       gap: 18px;
       padding: 12px 32px 24px;
       overflow-x: auto;
@@ -185,6 +186,7 @@
     .gray { background: linear-gradient(135deg, #94a3b8, #475569); }
     .green { background: linear-gradient(135deg, #22c55e, #15803d); }
     .purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+    .teal { background: linear-gradient(135deg, #14b8a6, #0f766e); }
 
     .task-list {
       padding: 12px;
@@ -571,7 +573,7 @@
 
     @media (max-width: 1200px) {
       .dashboard { grid-template-columns: repeat(3, 1fr); }
-      .board { grid-template-columns: repeat(6, 300px); }
+      .board { grid-template-columns: repeat(7, 300px); }
     }
 
     @media (max-width: 760px) {
@@ -579,7 +581,7 @@
       header h1 { font-size: 22px; }
       .dashboard { grid-template-columns: repeat(2, 1fr); }
       .form-grid, .comment-compose { grid-template-columns: 1fr; }
-      .board { grid-template-columns: repeat(6, 285px); }
+      .board { grid-template-columns: repeat(7, 285px); }
     }
   </style>
 </head>
@@ -642,6 +644,7 @@
             <option value="desarrollo">En desarrollo</option>
             <option value="pendiente">Pendiente</option>
             <option value="test_usuario">Test de Usuario</option>
+            <option value="para_desplegar">Para desplegar</option>
             <option value="definicion">Pendiente de definición / análisis</option>
             <option value="implementado">Implementado</option>
           </select>
@@ -701,6 +704,7 @@
       { id: "desarrollo", title: "En Desarrollo", class: "orange" },
       { id: "pendiente", title: "Pendientes", class: "yellow" },
       { id: "test_usuario", title: "Test de Usuario", class: "purple" },
+      { id: "para_desplegar", title: "Para Desplegar", class: "teal" },
       { id: "definicion", title: "Pendientes de Definición / Análisis", class: "gray" },
       { id: "implementado", title: "Implementado", class: "green" }
     ];
@@ -868,6 +872,7 @@
         { label: "En Desarrollo", value: countByStatus("desarrollo") },
         { label: "Pendientes", value: countByStatus("pendiente") },
         { label: "Test Usuario", value: countByStatus("test_usuario") },
+        { label: "Para Desplegar", value: countByStatus("para_desplegar") },
         { label: "En Análisis", value: countByStatus("definicion") },
         { label: "Implementadas", value: countByStatus("implementado") }
       ];
@@ -1590,6 +1595,7 @@
         desarrollo: [249, 115, 22],
         pendiente: [234, 179, 8],
         test_usuario: [139, 92, 246],
+        para_desplegar: [20, 184, 166],
         definicion: [148, 163, 184],
         implementado: [34, 197, 94]
       };
@@ -1627,6 +1633,7 @@
         ["En Desarrollo", countByStatus("desarrollo")],
         ["Pendientes", countByStatus("pendiente")],
         ["Test de Usuario", countByStatus("test_usuario")],
+        ["Para Desplegar", countByStatus("para_desplegar")],
         ["Pendientes de Definición / Análisis", countByStatus("definicion")],
         ["Implementadas", countByStatus("implementado")]
       ];
