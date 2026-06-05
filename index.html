@@ -72,7 +72,7 @@
 
     .dashboard {
       display: grid;
-      grid-template-columns: repeat(8, minmax(150px, 1fr));
+      grid-template-columns: repeat(7, minmax(150px, 1fr));
       gap: 12px;
       padding: 18px 32px 0;
     }
@@ -150,7 +150,7 @@
 
     .board {
       display: grid;
-      grid-template-columns: repeat(7, minmax(300px, 1fr));
+      grid-template-columns: repeat(6, minmax(300px, 1fr));
       gap: 18px;
       padding: 12px 32px 24px;
       overflow-x: auto;
@@ -210,6 +210,57 @@
       cursor: grab;
       transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease, margin .18s ease;
       position: relative;
+    }
+
+    .task.urgent-task {
+      border-left-color: #dc2626;
+      background:
+        linear-gradient(135deg, rgba(239, 68, 68, .12), transparent 38%),
+        var(--card);
+      box-shadow: 0 12px 30px rgba(220, 38, 38, .16);
+    }
+
+    .task.urgent-task h3 {
+      color: #b91c1c;
+    }
+
+    .urgent-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 950;
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .urgent-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border: 1px solid #fecaca;
+      background: #fff1f2;
+      color: #991b1b;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 950;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    body.dark .urgent-toggle {
+      background: rgba(127, 29, 29, .35);
+      color: #fecaca;
+      border-color: rgba(248, 113, 113, .35);
+    }
+
+    .urgent-toggle input {
+      width: auto;
+      accent-color: #dc2626;
     }
 
     .task:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
@@ -573,7 +624,7 @@
 
     @media (max-width: 1200px) {
       .dashboard { grid-template-columns: repeat(3, 1fr); }
-      .board { grid-template-columns: repeat(7, 300px); }
+      .board { grid-template-columns: repeat(6, 300px); }
     }
 
     @media (max-width: 760px) {
@@ -581,7 +632,7 @@
       header h1 { font-size: 22px; }
       .dashboard { grid-template-columns: repeat(2, 1fr); }
       .form-grid, .comment-compose { grid-template-columns: 1fr; }
-      .board { grid-template-columns: repeat(7, 285px); }
+      .board { grid-template-columns: repeat(6, 285px); }
     }
   </style>
 </head>
@@ -640,7 +691,6 @@
         <div class="form-group full">
           <label>Estado</label>
           <select id="taskStatus">
-            <option value="urgente">Prioridad alta / urgente</option>
             <option value="desarrollo">En desarrollo</option>
             <option value="pendiente">Pendiente</option>
             <option value="test_usuario">Test de Usuario</option>
@@ -648,6 +698,13 @@
             <option value="definicion">Pendiente de definición / análisis</option>
             <option value="implementado">Implementado</option>
           </select>
+        </div>
+
+        <div class="form-group full">
+          <label class="urgent-toggle">
+            <input id="taskUrgent" type="checkbox" />
+            Marcar como tarea urgente
+          </label>
         </div>
 
         <div class="form-group full">
@@ -700,7 +757,6 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const columns = [
-      { id: "urgente", title: "Prioridad Alta / Urgente", class: "red" },
       { id: "desarrollo", title: "En Desarrollo", class: "orange" },
       { id: "pendiente", title: "Pendientes", class: "yellow" },
       { id: "test_usuario", title: "Test de Usuario", class: "purple" },
@@ -710,8 +766,8 @@
     ];
 
     const initialTasks = [
-      { code: "ITW-001", title: "Implementación del módulo de Representados", description: "Implementar en Escobar 360 la funcionalidad de representados, actualmente disponible únicamente en SGT. El objetivo es permitir que los usuarios puedan operar en nombre de empresas o personas jurídicas asociadas a su perfil.", status: "urgente" },
-      { code: "ITW-002", title: "Autenticación automática para trámites externos", description: "Implementar autenticación automática para trámites externos como Certificado Fiscal o Boleta Digital, evitando que el usuario vuelva a ingresar manualmente su CUIT.", status: "urgente" },
+      { code: "ITW-001", title: "Implementación del módulo de Representados", description: "Implementar en Escobar 360 la funcionalidad de representados, actualmente disponible únicamente en SGT. El objetivo es permitir que los usuarios puedan operar en nombre de empresas o personas jurídicas asociadas a su perfil.", status: "pendiente", urgent: true },
+      { code: "ITW-002", title: "Autenticación automática para trámites externos", description: "Implementar autenticación automática para trámites externos como Certificado Fiscal o Boleta Digital, evitando que el usuario vuelva a ingresar manualmente su CUIT.", status: "pendiente", urgent: true },
       { code: "ITW-003", title: "Trámite de Abasto - Autorización de Ingreso de Mercadería", description: "Implementar la generación de una constancia correspondiente a la autorización de ingreso de mercadería dentro del trámite de Abasto.", status: "desarrollo" },
       { code: "ITW-004", title: "Rediseño del reporte del trámite", description: "Rediseñar el reporte generado por ITW para mejorar la claridad, organización y presentación de los datos.", status: "pendiente" },
       { code: "ITW-005", title: "Visualización de títulos en el reporte", description: "Incorporar en el reporte final los títulos y subtítulos configurados dentro del trámite.", status: "pendiente" },
@@ -791,6 +847,7 @@
         title: task.title,
         description: task.description,
         status: task.status,
+        urgent: Boolean(task.urgent),
         position: index + 1,
         images: [],
         comments: [],
@@ -816,7 +873,8 @@
         code: task.code || "",
         title: task.title || "",
         description: task.description || "",
-        status: task.status || "pendiente",
+        status: task.status === "urgente" ? "pendiente" : (task.status || "pendiente"),
+        urgent: Boolean(task.urgent || task.status === "urgente"),
         position: Number.isFinite(Number(task.position)) ? Number(task.position) : 999999,
         images: Array.isArray(task.images) ? task.images : [],
         comments: Array.isArray(task.comments) ? task.comments : [],
@@ -868,7 +926,7 @@
     function renderDashboard() {
       const stats = [
         { label: "Total tareas", value: tasks.length },
-        { label: "Urgentes", value: countByStatus("urgente") },
+        { label: "Urgentes", value: tasks.filter(task => task.urgent).length },
         { label: "En Desarrollo", value: countByStatus("desarrollo") },
         { label: "Pendientes", value: countByStatus("pendiente") },
         { label: "Test Usuario", value: countByStatus("test_usuario") },
@@ -926,7 +984,7 @@
 
     function createTaskCard(task) {
       const card = document.createElement("article");
-      card.className = movingTaskIds.has(task.id) ? "task moving" : "task";
+      card.className = `${movingTaskIds.has(task.id) ? "task moving" : "task"} ${task.urgent ? "urgent-task" : ""}`;
       card.draggable = true;
       card.dataset.id = task.id;
       card.addEventListener("dragstart", event => dragTask(event, task.id));
@@ -941,6 +999,7 @@
         <h3>${escapeHtml(task.title)}</h3>
         <p>${escapeHtml(task.description)}</p>
         <div class="badges">
+          ${task.urgent ? `<span class="urgent-pill">⚠ Urgente</span>` : ""}
           <span class="badge">${(task.comments || []).length} comentarios</span>
           <span class="badge">${(task.images || []).length} adjuntos</span>
         </div>
@@ -964,6 +1023,7 @@
       document.getElementById("taskTitle").value = "";
       document.getElementById("taskDescription").value = "";
       document.getElementById("taskStatus").value = "definicion";
+      document.getElementById("taskUrgent").checked = false;
       document.getElementById("taskImages").value = "";
       document.getElementById("commentsSection").style.display = "none";
       document.getElementById("historySection").style.display = "none";
@@ -1045,6 +1105,7 @@
       const title = document.getElementById("taskTitle").value.trim();
       const description = document.getElementById("taskDescription").value.trim();
       const status = document.getElementById("taskStatus").value;
+      const urgent = document.getElementById("taskUrgent").checked;
 
       if (!title || !description) {
         alert("Completá título y descripción.");
@@ -1070,7 +1131,7 @@
 
         const { error } = await supabaseClient
           .from(TASKS_TABLE)
-          .update({ title, description, status, images, history, updated_at: now })
+          .update({ title, description, status, urgent, images, history, updated_at: now })
           .eq("id", id);
 
         if (error) {
@@ -1096,6 +1157,7 @@
           title,
           description,
           status,
+          urgent,
           position: nextPosition,
           images,
           comments: [],
@@ -1146,6 +1208,7 @@
       document.getElementById("taskTitle").value = task.title;
       document.getElementById("taskDescription").value = task.description;
       document.getElementById("taskStatus").value = task.status;
+      document.getElementById("taskUrgent").checked = Boolean(task.urgent);
       document.getElementById("taskImages").value = "";
       document.getElementById("commentAuthor").value = "";
       document.getElementById("newComment").value = "";
@@ -1346,6 +1409,7 @@
         <p style="white-space:pre-wrap; line-height:1.55;">${escapeHtml(task.description)}</p>
         <div class="badges">
           <span class="badge">${getColumnTitle(task.status)}</span>
+          ${task.urgent ? `<span class="urgent-pill">⚠ Urgente</span>` : ""}
           <span class="badge">Creado ${formatDate(task.created_at)}</span>
           <span class="badge">Modificado ${formatDate(task.updated_at)}</span>
         </div>
@@ -1591,7 +1655,6 @@
       const total = tasks.length;
 
       const colors = {
-        urgente: [239, 68, 68],
         desarrollo: [249, 115, 22],
         pendiente: [234, 179, 8],
         test_usuario: [139, 92, 246],
@@ -1629,7 +1692,7 @@
 
       const summaryRows = [
         ["Total de tareas", total],
-        ["Prioridad Alta / Urgente", countByStatus("urgente")],
+        ["Tareas marcadas como urgentes", tasks.filter(task => task.urgent).length],
         ["En Desarrollo", countByStatus("desarrollo")],
         ["Pendientes", countByStatus("pendiente")],
         ["Test de Usuario", countByStatus("test_usuario")],
@@ -1703,10 +1766,11 @@
 
         doc.autoTable({
           startY: 48,
-          head: [["ID", "Tarea", "Descripción", "Comentarios", "Actualizado"]],
+          head: [["ID", "Tarea", "Urg.", "Descripción", "Comentarios", "Actualizado"]],
           body: colTasks.map(t => [
             t.code || "-",
             t.title || "-",
+            t.urgent ? "Sí" : "No",
             t.description || "-",
             String((t.comments || []).length),
             formatDate(t.updated_at)
@@ -1715,11 +1779,12 @@
           headStyles: { fillColor: c, textColor: 255, fontStyle: "bold" },
           styles: { fontSize: 8.5, cellPadding: 2.4, overflow: "linebreak", valign: "top" },
           columnStyles: {
-            0: { cellWidth: 20, fontStyle: "bold" },
-            1: { cellWidth: 42, fontStyle: "bold" },
-            2: { cellWidth: 80 },
-            3: { cellWidth: 22, halign: "center" },
-            4: { cellWidth: 26 }
+            0: { cellWidth: 18, fontStyle: "bold" },
+            1: { cellWidth: 38, fontStyle: "bold" },
+            2: { cellWidth: 12, halign: "center" },
+            3: { cellWidth: 75 },
+            4: { cellWidth: 20, halign: "center" },
+            5: { cellWidth: 26 }
           },
           margin: { left: margin, right: margin },
           didDrawPage: () => addHeaderFooter()
@@ -1765,7 +1830,8 @@
             code: task.code || `ITW-${String(index + 1).padStart(3, "0")}`,
             title: task.title || "Sin título",
             description: task.description || "Sin descripción",
-            status: task.status || "pendiente",
+            status: task.status === "urgente" ? "pendiente" : (task.status || "pendiente"),
+            urgent: Boolean(task.urgent || task.status === "urgente"),
             position: Number(task.position || index + 1),
             images: Array.isArray(task.images) ? task.images : [],
             comments: Array.isArray(task.comments) ? task.comments : [],
@@ -1795,6 +1861,7 @@
         Título: task.title,
         Descripción: task.description,
         Estado: getColumnTitle(task.status),
+        Urgente: task.urgent ? "Sí" : "No",
         Orden: task.position,
         Adjuntos: (task.images || []).length,
         Comentarios: (task.comments || []).length,
